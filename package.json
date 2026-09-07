@@ -6,6 +6,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm validate:catalog && pnpm build",
+    "dev": "pnpm --filter @local-ai-tools/web dev",
     "generate:catalog": "pnpm --filter @local-ai-tools/catalog generate",
     "lint": "eslint .",
     "format": "prettier --write .",

@@ -130,7 +130,7 @@ select {
 }
 
 .marketplace-panel {
-  margin: 1rem 0 5rem;
+  margin: 1rem auto 5rem;
   border: 1px solid var(--border);
   border-radius: 1.4rem;
   background: rgb(13 20 32 / 88%);
