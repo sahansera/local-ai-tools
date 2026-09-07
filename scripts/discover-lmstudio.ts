@@ -84,7 +84,9 @@ function normalizePlugin(artifact: HubArtifact): DiscoveryPlugin {
     name: artifact.name,
     description: artifact.description?.trim() || "",
     hubUrl:
-      artifact.current?.artifactUrl || artifact.url || `https://lmstudio.ai/${artifact.identifier}`,
+      artifact.current?.artifactUrl ||
+      artifact.url ||
+      `https://lmstudio.ai/${artifact.identifier}`,
     updatedAt: artifact.updatedAt || null,
     createdAt: artifact.createdAt || null,
     downloads: numeric(artifact.downloadCount),
@@ -99,7 +101,9 @@ function normalizePlugin(artifact: HubArtifact): DiscoveryPlugin {
   };
 }
 
-function pickFamilyRepresentatives(plugins: DiscoveryPlugin[]): DiscoveryPlugin[] {
+function pickFamilyRepresentatives(
+  plugins: DiscoveryPlugin[],
+): DiscoveryPlugin[] {
   const representatives = new Map<string, DiscoveryPlugin>();
 
   for (const plugin of plugins) {
@@ -110,7 +114,8 @@ function pickFamilyRepresentatives(plugins: DiscoveryPlugin[]): DiscoveryPlugin[
   }
 
   return [...representatives.values()].sort(
-    (left, right) => right.score - left.score || right.downloads - left.downloads,
+    (left, right) =>
+      right.score - left.score || right.downloads - left.downloads,
   );
 }
 
@@ -124,12 +129,15 @@ async function main(): Promise<void> {
   const response = await fetch(HUB_ARTIFACTS_URL, {
     headers: {
       Accept: "application/json",
-      "User-Agent": "local-ai-tools-discovery/0.1 (+https://github.com/sahansera/local-ai-tools)",
+      "User-Agent":
+        "local-ai-tools-discovery/0.1 (+https://github.com/sahansera/local-ai-tools)",
     },
   });
 
   if (!response.ok) {
-    throw new Error(`LM Studio Hub request failed: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `LM Studio Hub request failed: ${response.status} ${response.statusText}`,
+    );
   }
 
   const payload = (await response.json()) as HubArtifactsResponse;
@@ -139,9 +147,14 @@ async function main(): Promise<void> {
   }
 
   const plugins = artifacts
-    .filter((artifact) => artifact.type === "plugin" && artifact.private !== true)
+    .filter(
+      (artifact) => artifact.type === "plugin" && artifact.private !== true,
+    )
     .map(normalizePlugin)
-    .sort((left, right) => right.score - left.score || right.downloads - left.downloads);
+    .sort(
+      (left, right) =>
+        right.score - left.score || right.downloads - left.downloads,
+    );
 
   const representatives = pickFamilyRepresentatives(plugins);
   const output = {
@@ -160,10 +173,16 @@ async function main(): Promise<void> {
 
   const absoluteOutput = resolve(outputPath);
   await mkdir(dirname(absoluteOutput), { recursive: true });
-  await writeFile(absoluteOutput, `${JSON.stringify(output, null, 2)}\n`, "utf8");
+  await writeFile(
+    absoluteOutput,
+    `${JSON.stringify(output, null, 2)}\n`,
+    "utf8",
+  );
 
   console.log(`Fetched ${artifacts.length} public Hub artifacts.`);
-  console.log(`Found ${plugins.length} plugins across ${representatives.length} fork families.`);
+  console.log(
+    `Found ${plugins.length} plugins across ${representatives.length} fork families.`,
+  );
   console.log(`Wrote discovery snapshot to ${outputPath}.`);
 
   console.log("\nTop plugin candidates:");
