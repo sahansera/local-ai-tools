@@ -1,18 +1,125 @@
 ---
-const title = 'Local AI Tools';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ToolCard from '../components/ToolCard.astro';
+import { categories, platforms, tools } from '../lib/catalog';
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>{title}</title>
-  </head>
-  <body>
-    <main>
-      <h1>{title}</h1>
-      <p>Discover LM Studio-compatible plugins, MCP servers, and other local AI tools.</p>
-      <p>The marketplace UI is coming in M2. This page proves the static Astro application builds.</p>
-    </main>
-  </body>
-</html>
+<BaseLayout>
+  <main>
+    <section class="site-shell hero">
+      <div class="eyebrow">Open-source local AI discovery</div>
+      <h1>Find the right tools for your local AI.</h1>
+      <p>
+        Discover LM Studio-compatible plugins and MCP servers by capability, runtime, platform, and setup requirements.
+      </p>
+    </section>
+
+    <section class="site-shell marketplace-panel" id="tools" aria-labelledby="tools-heading">
+      <div class="filters">
+        <input class="search-input" id="tool-search" type="search" placeholder="Search video, files, coding…" aria-label="Search tools" />
+
+        <select class="filter-select" id="type-filter" aria-label="Filter by type">
+          <option value="">All types</option>
+          <option value="lmstudio-plugin">LM Studio plugins</option>
+          <option value="mcp">MCP servers</option>
+        </select>
+
+        <select class="filter-select" id="category-filter" aria-label="Filter by category">
+          <option value="">All categories</option>
+          {categories.map((category) => <option value={category}>{category}</option>)}
+        </select>
+
+        <select class="filter-select" id="platform-filter" aria-label="Filter by platform">
+          <option value="">All platforms</option>
+          {platforms.map((platform) => <option value={platform}>{platform}</option>)}
+        </select>
+      </div>
+
+      <div class="marketplace-meta">
+        <strong id="tools-heading">Browse tools</strong>
+        <span id="result-count">{tools.length} {tools.length === 1 ? 'tool' : 'tools'}</span>
+      </div>
+
+      <div class="tool-grid" id="tool-grid">
+        {tools.map((tool) => <ToolCard tool={tool} />)}
+      </div>
+
+      <div class="empty-state" id="empty-state">
+        No tools match those filters yet. Try a broader search.
+      </div>
+    </section>
+  </main>
+
+  <script type="module" is:inline>
+    const searchInput = document.querySelector('#tool-search');
+    const typeFilter = document.querySelector('#type-filter');
+    const categoryFilter = document.querySelector('#category-filter');
+    const platformFilter = document.querySelector('#platform-filter');
+    const cards = [...document.querySelectorAll('[data-tool-card]')];
+    const count = document.querySelector('#result-count');
+    const empty = document.querySelector('#empty-state');
+    const grid = document.querySelector('#tool-grid');
+
+    let pagefind = null;
+    try {
+      const pagefindUrl = new URL('_pagefind/pagefind.js', document.baseURI).href;
+      pagefind = await import(pagefindUrl);
+      await pagefind.init?.();
+    } catch {
+      // Pagefind is created after production builds. Local filtering keeps dev usable.
+    }
+
+    const values = () => ({
+      query: searchInput.value.trim().toLowerCase(),
+      type: typeFilter.value,
+      category: categoryFilter.value,
+      platform: platformFilter.value,
+    });
+
+    const localMatches = (card, filters) => {
+      const categories = card.dataset.category.split(',');
+      const platforms = card.dataset.platform.split(',');
+      return (
+        (!filters.query || card.dataset.search.includes(filters.query)) &&
+        (!filters.type || card.dataset.type === filters.type) &&
+        (!filters.category || categories.includes(filters.category)) &&
+        (!filters.platform || platforms.includes(filters.platform))
+      );
+    };
+
+    async function applyFilters() {
+      const filters = values();
+      let matchingIds = null;
+
+      if (pagefind) {
+        const pagefindFilters = {};
+        if (filters.type) pagefindFilters.type = filters.type;
+        if (filters.category) pagefindFilters.category = filters.category;
+        if (filters.platform) pagefindFilters.platform = filters.platform;
+
+        try {
+          const result = await pagefind.search(filters.query || null, { filters: pagefindFilters });
+          const resultData = await Promise.all(result.results.map((item) => item.data()));
+          matchingIds = new Set(resultData.map((item) => item.meta.toolId).filter(Boolean));
+        } catch {
+          matchingIds = null;
+        }
+      }
+
+      let visible = 0;
+      for (const card of cards) {
+        const show = matchingIds ? matchingIds.has(card.dataset.id) : localMatches(card, filters);
+        card.hidden = !show;
+        if (show) visible += 1;
+      }
+
+      count.textContent = `${visible} ${visible === 1 ? 'tool' : 'tools'}`;
+      empty.style.display = visible ? 'none' : 'block';
+      grid.style.display = visible ? 'grid' : 'none';
+    }
+
+    for (const control of [searchInput, typeFilter, categoryFilter, platformFilter]) {
+      control.addEventListener(control === searchInput ? 'input' : 'change', applyFilters);
+    }
+  </script>
+</BaseLayout>
