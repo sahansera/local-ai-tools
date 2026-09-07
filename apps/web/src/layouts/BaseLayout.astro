@@ -1,0 +1,43 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Local AI Tools',
+  description = 'Discover LM Studio-compatible plugins, MCP servers, and other local AI tools.',
+} = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="dark" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header class="site-shell site-header">
+      <a class="brand" href="/">
+        <span class="brand-mark">⌁</span>
+        <span>Local AI Tools</span>
+      </a>
+      <nav class="header-links" aria-label="Primary">
+        <a href="/#tools">Browse tools</a>
+        <a href="https://github.com/sahansera/local-ai-tools">GitHub</a>
+      </nav>
+    </header>
+
+    <slot />
+
+    <footer class="site-footer">
+      <div class="site-shell">
+        Independent community project for discovering local-AI tooling. Not affiliated with or endorsed by LM Studio.
+      </div>
+    </footer>
+  </body>
+</html>

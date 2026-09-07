@@ -1,2 +1,3 @@
 generated/
 pnpm-lock.yaml
+apps/web/src/styles/global.css
