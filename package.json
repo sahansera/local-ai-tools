@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.15.1",
   "scripts": {
     "build": "pnpm -r build",
-    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm validate:catalog && pnpm build",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm validate:catalog && pnpm build",
     "generate:catalog": "pnpm --filter @local-ai-tools/catalog generate",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -20,6 +20,7 @@
     "eslint": "^9.35.0",
     "globals": "^16.3.0",
     "prettier": "^3.6.2",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.42.0"
   }
