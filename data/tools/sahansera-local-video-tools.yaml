@@ -1,0 +1,29 @@
+schemaVersion: 1
+id: sahansera/local-video-tools
+name: Local Video Tools
+type: lmstudio-plugin
+description: Inspect, trim, convert, and manage FFmpeg video jobs locally from LM Studio.
+author:
+  name: Sahan Serasinghe
+  handle: sahansera
+categories:
+  - video
+  - media
+tags:
+  - ffmpeg
+  - video-editing
+  - local-ai
+links:
+  homepage: https://lmstudio.ai/sahansera/local-video-tools
+runtime:
+  local: true
+  networkRequired: false
+  apiKeyRequired: false
+platforms:
+  - macos
+  - windows
+  - linux
+source:
+  type: lmstudio-hub
+  owner: sahansera
+  slug: local-video-tools
