@@ -1,0 +1,49 @@
+---
+import { toolSlug, type Tool } from '../lib/catalog';
+
+interface Props {
+  tool: Tool;
+}
+
+const { tool } = Astro.props;
+const slug = toolSlug(tool);
+const searchable = [
+  tool.name,
+  tool.description,
+  tool.type,
+  ...tool.categories,
+  ...tool.tags,
+  ...tool.platforms,
+].join(' ').toLowerCase();
+---
+
+<article
+  class="tool-card"
+  data-tool-card
+  data-search={searchable}
+  data-type={tool.type}
+  data-category={tool.categories.join(',')}
+  data-platform={tool.platforms.join(',')}
+>
+  <div class="card-topline">
+    <span class="badge">{tool.type === 'lmstudio-plugin' ? 'LM Studio Plugin' : 'MCP Server'}</span>
+    {tool.runtime.local && <span class="badge good">Fully local</span>}
+    {!tool.runtime.apiKeyRequired && <span class="badge good">No API key</span>}
+  </div>
+
+  <div>
+    <h2><a href={`/tools/${slug}/`}>{tool.name}</a></h2>
+    <p>{tool.description}</p>
+  </div>
+
+  <div class="badges">
+    {tool.categories.map((category) => <span class="badge">{category}</span>)}
+  </div>
+
+  <div class="card-spacer"></div>
+
+  <div class="card-footer">
+    <span>by {tool.author.handle ?? tool.author.name}</span>
+    <a class="card-link" href={`/tools/${slug}/`}>View tool →</a>
+  </div>
+</article>
