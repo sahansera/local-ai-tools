@@ -1,10 +1,10 @@
-import catalogData from '../../../../generated/catalog.json';
+import catalogData from "../../../../generated/catalog.json";
 
 export interface Tool {
   schemaVersion: 1;
   id: string;
   name: string;
-  type: 'lmstudio-plugin' | 'mcp';
+  type: "lmstudio-plugin" | "mcp";
   description: string;
   author: {
     name: string;
@@ -21,7 +21,7 @@ export interface Tool {
     networkRequired: boolean;
     apiKeyRequired: boolean;
   };
-  platforms: Array<'macos' | 'windows' | 'linux'>;
+  platforms: Array<"macos" | "windows" | "linux">;
 }
 
 const catalogTools = catalogData.tools as Tool[];
@@ -29,8 +29,8 @@ export const tools = [...catalogTools];
 tools.sort((a, b) => a.name.localeCompare(b.name));
 
 export function toolSlug(tool: Tool): string {
-  const slashless = tool.id.replaceAll('/', '-');
-  const normalized = slashless.replaceAll(/[^a-zA-Z0-9-]/g, '-');
+  const slashless = tool.id.replaceAll("/", "-");
+  const normalized = slashless.replaceAll(/[^a-zA-Z0-9-]/g, "-");
   return normalized.toLowerCase();
 }
 
