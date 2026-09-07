@@ -1,1 +1,1 @@
-export const projectName = 'Local AI Tools';
+export const projectName = "Local AI Tools";
