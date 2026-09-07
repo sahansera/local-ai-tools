@@ -1,0 +1,27 @@
+{
+  "name": "local-ai-tools",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.15.1",
+  "scripts": {
+    "build": "pnpm -r build",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm validate:catalog && pnpm build",
+    "generate:catalog": "pnpm --filter @local-ai-tools/catalog generate",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "validate:catalog": "pnpm --filter @local-ai-tools/catalog validate"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.35.0",
+    "@types/node": "^24.3.1",
+    "eslint": "^9.35.0",
+    "globals": "^16.3.0",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.42.0"
+  }
+}

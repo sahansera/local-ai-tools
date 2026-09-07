@@ -1,0 +1,26 @@
+name: Bug report
+description: Report a reproducible problem in the marketplace, catalogue tooling, or MCP.
+title: "[Bug]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include the expected and actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node/pnpm version, browser or LM Studio version when relevant.
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context

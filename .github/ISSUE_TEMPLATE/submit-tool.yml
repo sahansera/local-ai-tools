@@ -1,0 +1,49 @@
+name: Submit a tool
+description: Propose an LM Studio-compatible plugin or MCP server for the catalogue.
+title: "[Tool]: "
+labels:
+  - catalogue
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Tool name
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: Tool type
+      options:
+        - LM Studio plugin
+        - MCP server
+    validations:
+      required: true
+  - type: input
+    id: homepage
+    attributes:
+      label: Canonical homepage or registry URL
+    validations:
+      required: true
+  - type: input
+    id: repository
+    attributes:
+      label: Source repository
+  - type: textarea
+    id: description
+    attributes:
+      label: What does it do?
+    validations:
+      required: true
+  - type: checkboxes
+    id: runtime
+    attributes:
+      label: Runtime characteristics
+      options:
+        - label: Runs fully locally
+        - label: Requires network access
+        - label: Requires an API key or account
+  - type: textarea
+    id: notes
+    attributes:
+      label: Compatibility or installation notes
