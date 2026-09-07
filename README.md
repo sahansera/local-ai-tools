@@ -22,6 +22,7 @@ packages/
   shared/    Shared utilities
 data/tools/  Contributor-authored catalogue entries
 generated/   Generated catalogue artifacts
+scripts/     Discovery and maintenance experiments
 ```
 
 External tools listed in the marketplace remain in their own repositories. This repository stores only marketplace metadata and first-party marketplace code.
@@ -35,10 +36,33 @@ Requirements:
 
 ```bash
 pnpm install
+pnpm dev
 pnpm validate:catalog
 pnpm generate:catalog
 pnpm check
 ```
+
+## LM Studio Hub discovery experiment
+
+LM Studio Hub exposes a public artifact feed at `https://lmstudio.ai/api/v1/artifacts`. The feed includes native plugin records together with owner/name, description, downloads, likes, forks, update timestamps, revision information, and canonical Hub URLs.
+
+The endpoint is currently treated as **undocumented and experimental**. Discovery output is never added to the public catalogue automatically.
+
+Run:
+
+```bash
+pnpm discover:lmstudio
+```
+
+This writes `generated/lmstudio-discovery.json` locally and prints the highest-ranked plugin families. The experiment:
+
+- keeps public artifacts whose Hub type is `plugin`
+- preserves Hub metadata for inspection
+- groups obvious forks into families
+- ranks candidates with a transparent engagement-based discovery score
+- keeps the generated snapshot out of Git
+
+The next step is to evaluate the candidates and decide which Hub signals and enrichment checks should become part of the marketplace ingestion workflow.
 
 ## Current milestones
 
