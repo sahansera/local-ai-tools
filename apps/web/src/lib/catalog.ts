@@ -24,15 +24,24 @@ export interface Tool {
   platforms: Array<'macos' | 'windows' | 'linux'>;
 }
 
-export const tools = (catalogData.tools as Tool[]).slice().sort((a, b) => a.name.localeCompare(b.name));
+export const tools = (catalogData.tools as Tool[])
+  .slice()
+  .sort((a, b) => a.name.localeCompare(b.name));
 
 export function toolSlug(tool: Tool): string {
-  return tool.id.replaceAll('/', '-').replaceAll(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
+  return tool.id
+    .replaceAll('/', '-')
+    .replaceAll(/[^a-zA-Z0-9-]/g, '-')
+    .toLowerCase();
 }
 
 export function getToolBySlug(slug: string): Tool | undefined {
   return tools.find((tool) => toolSlug(tool) === slug);
 }
 
-export const categories = [...new Set(tools.flatMap((tool) => tool.categories))].sort();
-export const platforms = [...new Set(tools.flatMap((tool) => tool.platforms))].sort();
+export const categories = [
+  ...new Set(tools.flatMap((tool) => tool.categories)),
+].sort();
+export const platforms = [
+  ...new Set(tools.flatMap((tool) => tool.platforms)),
+].sort();
