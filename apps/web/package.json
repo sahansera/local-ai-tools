@@ -4,14 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "astro build",
-    "dev": "astro dev",
-    "typecheck": "astro check"
+    "prepare:catalog": "pnpm --filter @local-ai-tools/catalog generate",
+    "build": "pnpm run prepare:catalog && astro build && pagefind --site dist",
+    "dev": "pnpm run prepare:catalog && astro dev",
+    "typecheck": "pnpm run prepare:catalog && astro check"
   },
   "dependencies": {
     "astro": "^5.13.5"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.4"
+    "@astrojs/check": "^0.9.4",
+    "pagefind": "^1.4.0"
   }
 }
