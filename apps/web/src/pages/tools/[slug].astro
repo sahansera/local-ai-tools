@@ -24,7 +24,7 @@ const typeLabel = tool.type === 'lmstudio-plugin' ? 'LM Studio Plugin' : 'MCP Se
       </div>
 
       <h1 data-pagefind-meta="title">{tool.name}</h1>
-      <meta data-pagefind-meta="toolId[content]" content={tool.id} />
+      <span hidden data-pagefind-meta="toolId">{tool.id}</span>
       <p>{tool.description}</p>
 
       <div class="detail-section">
