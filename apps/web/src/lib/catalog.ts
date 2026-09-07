@@ -24,7 +24,7 @@ export interface Tool {
   platforms: Array<'macos' | 'windows' | 'linux'>;
 }
 
-export const tools = (catalogData.tools as Tool[]).toSorted((a, b) => a.name.localeCompare(b.name));
+export const tools = (catalogData.tools as Tool[]).slice().sort((a, b) => a.name.localeCompare(b.name));
 
 export function toolSlug(tool: Tool): string {
   return tool.id.replaceAll('/', '-').replaceAll(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
