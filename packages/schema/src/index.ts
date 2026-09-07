@@ -1,7 +1,7 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-export const toolTypeSchema = z.enum(['lmstudio-plugin', 'mcp']);
-export const platformSchema = z.enum(['macos', 'windows', 'linux']);
+export const toolTypeSchema = z.enum(["lmstudio-plugin", "mcp"]);
+export const platformSchema = z.enum(["macos", "windows", "linux"]);
 
 export const toolSchema = z.object({
   schemaVersion: z.literal(1),
@@ -25,18 +25,18 @@ export const toolSchema = z.object({
     apiKeyRequired: z.boolean(),
   }),
   platforms: z.array(platformSchema).min(1),
-  source: z.discriminatedUnion('type', [
+  source: z.discriminatedUnion("type", [
     z.object({
-      type: z.literal('lmstudio-hub'),
+      type: z.literal("lmstudio-hub"),
       owner: z.string().min(1),
       slug: z.string().min(1),
     }),
     z.object({
-      type: z.literal('mcp-registry'),
+      type: z.literal("mcp-registry"),
       id: z.string().min(1),
     }),
     z.object({
-      type: z.literal('manual'),
+      type: z.literal("manual"),
     }),
   ]),
 });
@@ -46,5 +46,5 @@ export type ToolType = z.infer<typeof toolTypeSchema>;
 export type Platform = z.infer<typeof platformSchema>;
 
 export const toolJsonSchema = z.toJSONSchema(toolSchema, {
-  target: 'draft-2020-12',
+  target: "draft-2020-12",
 });
