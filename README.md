@@ -44,27 +44,36 @@ pnpm generate:catalog
 pnpm check
 ```
 
-`pnpm dev` always works with contributor-authored catalogue records. If local LM Studio discovery/enrichment snapshots exist, the web app merges them into the same catalogue automatically.
+`pnpm dev` always works with contributor-authored catalogue records. If local LM Studio or MCP Registry snapshots exist, the web app merges them into the same catalogue automatically.
 
-To refresh Hub discovery/enrichment and start the marketplace in one command:
+To refresh both upstream ecosystems and start the marketplace:
+
+```bash
+pnpm dev:marketplace
+```
+
+For a production-style static build with fresh LM Studio Hub and MCP Registry snapshots:
+
+```bash
+pnpm build:marketplace
+```
+
+LM Studio-only workflows remain available while experimenting:
 
 ```bash
 pnpm dev:hub
-```
-
-For a production-style static build that includes a fresh Hub snapshot:
-
-```bash
 pnpm build:hub
 ```
 
 The UI uses the public LM Studio Hub discovery snapshot as the source of visible native-plugin families. Fork families are deduplicated to one representative. Enrichment adds capability, runtime, and risk signals where available but does not determine whether a valid discovered plugin is visible.
 
+MCP servers come from the official MCP Registry. Registry presence determines discoverability; Local AI Tools normalizes the latest server version and exposes factual setup metadata such as package registry type and transport without maintaining a manual MCP allowlist.
+
 Contributor-authored YAML records are not an allowlist. They can provide higher-quality metadata for known tools. If the same tool also exists in LM Studio Hub, Local AI Tools keeps one listing, retains LM Studio Hub as the provenance, and merges Hub popularity/update metadata into that record.
 
 ## Deployment
 
-GitHub Pages deployment is handled by `.github/workflows/deploy-pages.yml` on pushes to `main` and manual workflow runs. The production workflow refreshes LM Studio Hub discovery/enrichment before building the Astro/Pagefind site, then deploys `apps/web/dist` through the official GitHub Pages artifact flow.
+GitHub Pages deployment is handled by `.github/workflows/deploy-pages.yml` on pushes to `main` and manual workflow runs. The production workflow refreshes LM Studio Hub discovery/enrichment and the official MCP Registry before building the Astro/Pagefind site, then deploys `apps/web/dist` through the official GitHub Pages artifact flow.
 
 The default project Pages target is:
 
@@ -79,7 +88,7 @@ SITE_URL=https://example.com
 SITE_BASE=/
 ```
 
-The Hub-backed build intentionally fails if the upstream refresh fails so an existing good deployment is not replaced with a partial catalogue.
+The marketplace build intentionally fails if an upstream refresh fails so an existing good deployment is not replaced with a partial catalogue.
 
 ## LM Studio Hub discovery and enrichment
 
@@ -137,9 +146,32 @@ pnpm search:lmstudio -- coding
 
 This is an evaluation tool, not the production marketplace ranking. It weights capability matches more strongly than raw popularity so we can inspect whether the enrichment pipeline is actually solving capability-oriented discovery.
 
+## Official MCP Registry ingestion
+
+The official MCP Registry provides an unauthenticated read-only REST API for downstream aggregators. Local AI Tools consumes `GET /v0.1/servers` using cursor pagination and requests `version=latest` so each server is represented once at its latest published version.
+
+```bash
+pnpm discover:mcp
+```
+
+This writes `generated/mcp-registry.json` locally. The generated snapshot remains ignored by Git and is refreshed during production marketplace builds.
+
+The ingestion step:
+
+- follows the Registry's opaque pagination cursor until all latest server records are fetched
+- excludes records marked deleted
+- deduplicates by canonical Registry server name
+- preserves Registry provenance and version/status timestamps
+- records factual package types such as npm, PyPI, OCI or MCPB when present
+- records declared transports such as stdio, SSE or Streamable HTTP
+- distinguishes package-only local execution from remote-only servers conservatively
+- leaves API-key, platform and other uncertain properties as `unknown`
+
+MCP capability classification, auth requirements, local-model friendliness and risk signals are intentionally separate enrichment work rather than inclusion criteria.
+
 ## Marketplace ranking
 
-The default **Recommended** order is calculated from signals such as Hub engagement, recency, and metadata completeness. It does not privilege contributor-authored records. Users can switch to explicit sorts such as **Popular**, **Recently updated**, and **Name A–Z**.
+The default **Recommended** order is calculated from available signals such as engagement, recency, and metadata completeness. It does not privilege contributor-authored records. Users can switch to explicit sorts such as **Popular**, **Recently updated**, and **Name A–Z**.
 
 The product principle is simple: expose useful facts and signals, then let users decide which tools fit their needs.
 
@@ -149,8 +181,9 @@ The product principle is simple: expose useful facts and signals, then let users
 - **M1 — Catalogue:** schema, YAML validation, generated catalogue, first listing
 - **M2 — Marketplace:** Astro UI, search, filters, tool pages
 - **M3 — Deployment:** GitHub Pages and Pagefind
-- **M4 — Contributions:** submission workflow
-- **M5 — MCP:** discovery tools over the same catalogue
+- **M4 — Upstream discovery:** LM Studio Hub and official MCP Registry ingestion
+- **M5 — Contributions:** submission workflow
+- **M6 — Marketplace MCP:** discovery tools over the same catalogue
 
 The first catalogue record is [Local Video Tools](https://lmstudio.ai/sahansera/local-video-tools).
 
