@@ -14,8 +14,7 @@ export function lmStudioInstallUrl(tool: Tool): string | undefined {
     return `lmstudio://plugin?owner=${encodeURIComponent(owner)}&name=${encodeURIComponent(name)}`;
   }
 
-  if (tool.lmStudio?.status === "ready") return tool.lmStudio.deeplink;
-  return undefined;
+  return tool.lmStudio?.deeplink;
 }
 
 export function lmStudioStatusLabel(tool: Tool): string {
