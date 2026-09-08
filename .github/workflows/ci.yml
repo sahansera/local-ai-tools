@@ -14,17 +14,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v4.4.0
         with:
           version: 10.15.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
+          package-manager-cache: false
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -48,4 +49,7 @@ jobs:
         run: pnpm test
 
       - name: Build
+        env:
+          SITE_URL: https://sahansera.github.io
+          SITE_BASE: /local-ai-tools
         run: pnpm build
