@@ -93,9 +93,9 @@ function installName(serverName: string): string {
 
 function inputLabel(input: RegistryInput, fallback: string): string {
   return (
-    input.name?.trim() ||
     input.valueHint?.trim() ||
     input.placeholder?.trim() ||
+    input.name?.trim() ||
     fallback
   );
 }
