@@ -154,5 +154,8 @@ const entrypoint = process.argv[1]
   ? pathToFileURL(process.argv[1]).href
   : undefined;
 if (entrypoint && import.meta.url === entrypoint) {
-  await main();
+  main().catch((error: unknown) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
 }
