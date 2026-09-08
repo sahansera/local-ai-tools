@@ -24,7 +24,7 @@ test("marks a single streamable HTTP remote as LM Studio ready", () => {
   assert.match(result.deeplink ?? "", /^lmstudio:\/\/add_mcp\?/);
 });
 
-test("requires setup when a remote MCP needs a header value", () => {
+test("keeps Add to LM Studio available when a remote MCP only needs header setup", () => {
   const result = evaluateLmStudioCompatibility({
     name: "io.example/private-search",
     remotes: [
@@ -44,12 +44,12 @@ test("requires setup when a remote MCP needs a header value", () => {
   });
 
   assert.equal(result.status, "setup-required");
-  assert.equal(result.deeplink, undefined);
+  assert.match(result.deeplink ?? "", /^lmstudio:\/\/add_mcp\?/);
   assert.equal(result.config?.headers?.Authorization, "<API_TOKEN>");
   assert.deepEqual(result.requiredInputs, ["API token"]);
 });
 
-test("requires setup rather than installing unresolved remote URL templates", () => {
+test("does not install unresolved remote URL templates", () => {
   const result = evaluateLmStudioCompatibility({
     name: "io.example/tenant",
     remotes: [
@@ -111,7 +111,7 @@ test("does not guess unsupported package runtime hints", () => {
   assert.equal(result.deeplink, undefined);
 });
 
-test("generates a config template but no deeplink when stdio env is required", () => {
+test("keeps Add to LM Studio available for stdio config templates with required env", () => {
   const result = evaluateLmStudioCompatibility({
     name: "io.example/weather",
     packages: [
@@ -131,7 +131,7 @@ test("generates a config template but no deeplink when stdio env is required", (
   });
 
   assert.equal(result.status, "setup-required");
-  assert.equal(result.deeplink, undefined);
+  assert.match(result.deeplink ?? "", /^lmstudio:\/\/add_mcp\?/);
   assert.equal(result.config?.env?.WEATHER_API_KEY, "<WEATHER_API_KEY>");
 });
 
@@ -145,5 +145,25 @@ test("native LM Studio plugins always get the plugin deeplink", () => {
   assert.equal(
     lmStudioInstallUrl(tool),
     "lmstudio://plugin?owner=sahansera&name=local-video-tools",
+  );
+});
+
+test("setup-required MCPs expose their generated install template when safe", () => {
+  const tool = {
+    type: "mcp",
+    id: "mcp:io.example/weather",
+    lmStudio: {
+      status: "setup-required",
+      installName: "weather",
+      reason: "Needs an API key",
+      requirements: [],
+      requiredInputs: ["WEATHER_API_KEY"],
+      deeplink: "lmstudio://add_mcp?name=weather&config=abc",
+    },
+  } as Tool;
+
+  assert.equal(
+    lmStudioInstallUrl(tool),
+    "lmstudio://add_mcp?name=weather&config=abc",
   );
 });
