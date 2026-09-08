@@ -31,7 +31,14 @@ function rank(plugin: Plugin, query: string): number {
   const queryTokens = tokens(query);
   const capabilityText = Object.keys(plugin.enrichment.capabilities).join(" ");
   const riskText = Object.keys(plugin.enrichment.risks).join(" ");
-  const haystack = `${plugin.identifier} ${plugin.description} ${capabilityText} ${plugin.enrichment.searchableTerms.join(" ")}`.toLowerCase();
+  const haystack = [
+    plugin.identifier,
+    plugin.description,
+    capabilityText,
+    plugin.enrichment.searchableTerms.join(" "),
+  ]
+    .join(" ")
+    .toLowerCase();
 
   let relevance = 0;
   for (const token of queryTokens) {
@@ -42,7 +49,8 @@ function rank(plugin: Plugin, query: string): number {
   }
 
   if (!relevance) return 0;
-  const popularity = Math.log10(plugin.downloads + 1) * 2 + Math.log10(plugin.likes + 1);
+  const popularity =
+    Math.log10(plugin.downloads + 1) * 2 + Math.log10(plugin.likes + 1);
   const riskPenalty = riskText.includes("shell-execution") ? 1 : 0;
   return relevance + popularity - riskPenalty;
 }
@@ -51,11 +59,16 @@ async function main(): Promise<void> {
   const query = process.argv.slice(2).join(" ").trim();
   if (!query) throw new Error('Usage: pnpm search:lmstudio -- "memory"');
 
-  const snapshot = JSON.parse(await readFile(resolve(ENRICHED_PATH), "utf8")) as Snapshot;
+  const snapshot = JSON.parse(
+    await readFile(resolve(ENRICHED_PATH), "utf8"),
+  ) as Snapshot;
   const results = snapshot.plugins
     .map((plugin) => ({ plugin, rank: rank(plugin, query) }))
     .filter((item) => item.rank > 0)
-    .sort((a, b) => b.rank - a.rank || b.plugin.downloads - a.plugin.downloads)
+    .sort(
+      (a, b) =>
+        b.rank - a.rank || b.plugin.downloads - a.plugin.downloads,
+    )
     .slice(0, 15);
 
   console.log(`Top matches for: ${query}\n`);
@@ -65,12 +78,17 @@ async function main(): Promise<void> {
   }
 
   for (const { plugin, rank } of results) {
-    const capabilities = Object.keys(plugin.enrichment.capabilities).join(", ") || "unclassified";
-    const risks = Object.keys(plugin.enrichment.risks).join(", ") || "none detected";
+    const capabilities =
+      Object.keys(plugin.enrichment.capabilities).join(", ") || "unclassified";
+    const risks =
+      Object.keys(plugin.enrichment.risks).join(", ") || "none detected";
+    const description = plugin.description.slice(0, 180);
+    const suffix = plugin.description.length > 180 ? "…" : "";
+
     console.log(`${rank.toFixed(1).padStart(6)}  ${plugin.identifier}`);
     console.log(`        ${plugin.downloads} downloads · ${capabilities}`);
     console.log(`        risks: ${risks}`);
-    console.log(`        ${plugin.description.slice(0, 180)}${plugin.description.length > 180 ? "…" : ""}\n`);
+    console.log(`        ${description}${suffix}\n`);
   }
 }
 
