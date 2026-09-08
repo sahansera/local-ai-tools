@@ -10,6 +10,7 @@ const {
   title = 'Local AI Tools',
   description = 'Discover LM Studio-compatible plugins, MCP servers, and other local AI tools.',
 } = Astro.props;
+const base = import.meta.env.BASE_URL;
 ---
 
 <html lang="en">
@@ -22,12 +23,12 @@ const {
   </head>
   <body>
     <header class="site-shell site-header">
-      <a class="brand" href="/">
+      <a class="brand" href={base}>
         <span class="brand-mark">⌁</span>
         <span>Local AI Tools</span>
       </a>
       <nav class="header-links" aria-label="Primary">
-        <a href="/#tools">Browse</a>
+        <a href={`${base}#tools`}>Browse</a>
         <a
           class="github-link"
           href="https://github.com/sahansera/local-ai-tools"
