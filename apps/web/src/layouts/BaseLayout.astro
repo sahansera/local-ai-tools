@@ -13,6 +13,8 @@ const {
 } = Astro.props;
 const homeHref = withBase();
 const browseHref = `${homeHref}#tools`;
+const appIconHref = withBase('app-icon.svg');
+const manifestHref = withBase('site.webmanifest');
 ---
 
 <html lang="en">
@@ -21,12 +23,16 @@ const browseHref = `${homeHref}#tools`;
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={description} />
     <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#4c3ff1" />
+    <link rel="icon" href={appIconHref} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href={appIconHref} />
+    <link rel="manifest" href={manifestHref} />
     <title>{title}</title>
   </head>
   <body>
     <header class="site-shell site-header">
       <a class="brand" href={homeHref}>
-        <span class="brand-mark">⌁</span>
+        <img class="brand-mark" src={appIconHref} alt="" width="32" height="32" aria-hidden="true" />
         <span>Local AI Tools</span>
       </a>
       <nav class="header-links" aria-label="Primary">
