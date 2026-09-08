@@ -72,8 +72,22 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
           <p>{compatibilityReason}</p>
         </div>
         {installUrl
-          ? <a class="inline-install-button" href={installUrl}>Add to LM Studio</a>
-          : <span class="inline-install-button disabled" aria-disabled="true" title={compatibilityReason}>Add to LM Studio</span>}
+          ? (
+            <a class="inline-install-button" href={installUrl}>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              <span>Add to LM Studio</span>
+            </a>
+          )
+          : (
+            <span class="inline-install-button disabled" aria-disabled="true" title={compatibilityReason}>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              <span>Add to LM Studio</span>
+            </span>
+          )}
       </div>
 
       {tool.type === 'mcp' && tool.lmStudio && (
@@ -227,9 +241,6 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       {typeof tool.source.likes === 'number' && <div class="detail-row"><span>Likes</span><strong>{tool.source.likes}</strong></div>}
       {tool.source.updatedAt && <div class="detail-row"><span>Updated</span><strong>{new Date(tool.source.updatedAt).toLocaleDateString('en-AU')}</strong></div>}
 
-      {installUrl
-        ? <a class="primary-button" href={installUrl}>Add to LM Studio</a>
-        : <span class="primary-button disabled-button" aria-disabled="true" title={compatibilityReason}>Add to LM Studio</span>}
       <a class="secondary-link" href={tool.links.homepage} rel="external">Open official page →</a>
       {tool.links.repository && <a class="secondary-link" href={tool.links.repository}>View source repository →</a>}
     </aside>
@@ -255,10 +266,10 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       justify-content: space-between;
       gap: 1.25rem;
       margin-top: 1.5rem;
-      border: 1px solid rgb(125 211 252 / 18%);
+      border: 1px solid rgb(139 92 246 / 26%);
       border-radius: 1rem;
       padding: 1rem;
-      background: rgb(125 211 252 / 4%);
+      background: linear-gradient(135deg, rgb(124 58 237 / 8%), rgb(91 92 246 / 4%));
     }
 
     .compatibility-panel h2 {
@@ -275,7 +286,7 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
 
     .compatibility-kicker,
     .config-preview > span {
-      color: var(--accent);
+      color: #a78bfa;
       font-size: 0.72rem;
       font-weight: 750;
       letter-spacing: 0.05em;
@@ -285,25 +296,53 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
     .inline-install-button {
       display: inline-flex;
       flex: 0 0 auto;
-      min-height: 2.6rem;
+      min-height: 2.75rem;
       align-items: center;
       justify-content: center;
-      border-radius: 0.72rem;
-      padding: 0 0.95rem;
-      background: var(--text);
-      color: var(--bg);
+      gap: 0.5rem;
+      border-radius: 0.78rem;
+      padding: 0 1rem;
+      background: linear-gradient(135deg, #7c3aed, #5b5cf6);
+      box-shadow: 0 10px 28px rgb(124 58 237 / 24%);
+      color: white;
       font-size: 0.82rem;
       font-weight: 800;
       text-decoration: none;
+      transition:
+        transform 150ms ease,
+        box-shadow 150ms ease,
+        filter 150ms ease;
     }
 
-    .inline-install-button.disabled,
-    .disabled-button {
+    .inline-install-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 34px rgb(124 58 237 / 32%);
+      filter: brightness(1.06);
+    }
+
+    .inline-install-button svg {
+      width: 1rem;
+      height: 1rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 2.2;
+    }
+
+    .inline-install-button.disabled {
       border: 1px solid var(--border);
       background: #09101a;
+      box-shadow: none;
       color: var(--muted);
       cursor: not-allowed;
       opacity: 0.65;
+    }
+
+    .inline-install-button.disabled:hover {
+      transform: none;
+      box-shadow: none;
+      filter: none;
     }
 
     .compatibility-list {
@@ -386,6 +425,10 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       .compatibility-panel {
         align-items: stretch;
         flex-direction: column;
+      }
+
+      .inline-install-button {
+        width: 100%;
       }
     }
   </style>
