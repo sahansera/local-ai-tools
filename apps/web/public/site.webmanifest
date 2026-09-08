@@ -1,0 +1,18 @@
+{
+  "name": "Local AI Tools",
+  "short_name": "Local AI Tools",
+  "description": "Discover LM Studio-compatible plugins and MCP servers.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#070b12",
+  "theme_color": "#4c3ff1",
+  "icons": [
+    {
+      "src": "./app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
