@@ -24,6 +24,7 @@ const inferred = tool.source.inferred;
 const hasInferredMetadata = Boolean(
   inferred?.capabilities || inferred?.runtime || inferred?.risks || inferred?.platforms,
 );
+const visibleCategories = tool.categories.filter((category) => category !== 'uncategorized');
 
 function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
   if (value === true) return yes;
@@ -40,6 +41,7 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
         <span hidden data-pagefind-filter={`source:${tool.source.kind}`}>{tool.source.kind}</span>
         <span class="badge source">{sourceLabel}</span>
         {tool.runtime.local === true && <span class="badge good" data-pagefind-filter="local:true">Fully local</span>}
+        {tool.runtime.local === false && <span class="badge">Remote</span>}
         {tool.runtime.apiKeyRequired === false && <span class="badge good" data-pagefind-filter="api-key:false">No API key</span>}
       </div>
 
@@ -49,7 +51,38 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
 
       {hasInferredMetadata && (
         <div class="metadata-note" data-pagefind-ignore>
-          Some capability, runtime, or risk signals on this listing were inferred from public source metadata to improve discovery. Inferred values may be incomplete; use the official plugin page as the source of truth.
+          Some capability, runtime, or risk signals on this listing were inferred from public source metadata to improve discovery. Inferred values may be incomplete; use the upstream project or registry page as the source of truth.
+        </div>
+      )}
+
+      {tool.setup && (
+        <div class="detail-section">
+          <h2>MCP setup</h2>
+          <p class="section-note">Setup metadata is taken directly from the official MCP Registry.</p>
+          <div class="setup-grid">
+            {tool.setup.version && (
+              <div>
+                <span>Version</span>
+                <strong>v{tool.setup.version}</strong>
+              </div>
+            )}
+            {(tool.setup.packageTypes?.length ?? 0) > 0 && (
+              <div>
+                <span>Packages</span>
+                <div class="badges">
+                  {tool.setup.packageTypes?.map((packageType) => <span class="badge">{packageType}</span>)}
+                </div>
+              </div>
+            )}
+            {(tool.setup.transports?.length ?? 0) > 0 && (
+              <div>
+                <span>Transports</span>
+                <div class="badges">
+                  {tool.setup.transports?.map((transport) => <span class="badge">{transport}</span>)}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -58,14 +91,18 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
         {inferred?.capabilities && (
           <p class="section-note">These capabilities were inferred from the plugin's public Hub metadata.</p>
         )}
-        <div class="badges">
-          {tool.categories.map((category) => <span class="badge" data-pagefind-filter={`category:${category}`}>{category}</span>)}
-        </div>
+        {visibleCategories.length > 0
+          ? (
+            <div class="badges">
+              {visibleCategories.map((category) => <span class="badge" data-pagefind-filter={`category:${category}`}>{category}</span>)}
+            </div>
+          )
+          : <p class="section-note">Capability classification is not available for this listing yet.</p>}
       </div>
 
       {tool.tags.length > 0 && (
         <div class="detail-section">
-          <h2>Tags</h2>
+          <h2>{tool.type === 'mcp' ? 'Registry metadata' : 'Tags'}</h2>
           <div class="badges">
             {tool.tags.map((tag) => <span class="badge">{tag}</span>)}
           </div>
@@ -87,7 +124,7 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       {(tool.risks?.length ?? 0) > 0 && (
         <div class="detail-section">
           <h2>Detected risk signals</h2>
-          <p class="section-note">These signals describe capabilities that may deserve extra review; they do not mean the plugin is unsafe.</p>
+          <p class="section-note">These signals describe capabilities that may deserve extra review; they do not mean the tool is unsafe.</p>
           <div class="badges">
             {tool.risks?.map((risk) => <span class="badge risk">⚠ {risk}</span>)}
           </div>
@@ -98,6 +135,8 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
     <aside class="detail-sidebar" data-pagefind-ignore>
       <div class="detail-row"><span>Type</span><strong>{typeLabel}</strong></div>
       <div class="detail-row"><span>Source</span><strong>{sourceLabel}</strong></div>
+      {tool.setup?.version && <div class="detail-row"><span>Version</span><strong>v{tool.setup.version}</strong></div>}
+      {tool.setup?.status && <div class="detail-row"><span>Registry status</span><strong>{tool.setup.status}</strong></div>}
       <div class="detail-row">
         <span>Execution</span>
         <strong>
@@ -146,6 +185,26 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       background: rgb(125 211 252 / 4%);
       font-size: 0.86rem;
       line-height: 1.6;
+    }
+
+    .setup-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+
+    .setup-grid > div {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .setup-grid > div > span {
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
 
     .detail-row strong {
