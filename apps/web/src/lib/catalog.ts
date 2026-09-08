@@ -109,7 +109,9 @@ const hubEnrichedPath = fileURLToPath(
   new URL("../../../../generated/lmstudio-enriched.json", import.meta.url),
 );
 
-function loadSnapshot<T extends { plugins?: unknown[] }>(path: string): T | null {
+function loadSnapshot<T extends { plugins?: unknown[] }>(
+  path: string,
+): T | null {
   try {
     return JSON.parse(readFileSync(path, "utf8")) as T;
   } catch (error) {
