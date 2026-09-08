@@ -12,7 +12,18 @@ interface Props {
 
 const { tool } = Astro.props;
 const typeLabel = tool.type === 'lmstudio-plugin' ? 'LM Studio Plugin' : 'MCP Server';
-const discovery = tool.source.kind === 'hub-discovery';
+const sourceLabel =
+  tool.source.kind === 'lmstudio-hub'
+    ? 'LM Studio Hub'
+    : tool.source.kind === 'mcp-registry'
+      ? 'MCP Registry'
+      : tool.source.kind === 'community'
+        ? 'Community submission'
+        : 'Manual listing';
+const inferred = tool.source.inferred;
+const hasInferredMetadata = Boolean(
+  inferred?.capabilities || inferred?.runtime || inferred?.risks || inferred?.platforms,
+);
 
 function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
   if (value === true) return yes;
@@ -27,7 +38,7 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       <div class="badges">
         <span class="badge" data-pagefind-filter={`type:${tool.type}`}>{typeLabel}</span>
         <span hidden data-pagefind-filter={`source:${tool.source.kind}`}>{tool.source.kind}</span>
-        {discovery && <span class="badge experimental">Hub discovery · experimental</span>}
+        <span class="badge source">{sourceLabel}</span>
         {tool.runtime.local === true && <span class="badge good" data-pagefind-filter="local:true">Fully local</span>}
         {tool.runtime.apiKeyRequired === false && <span class="badge good" data-pagefind-filter="api-key:false">No API key</span>}
       </div>
@@ -36,14 +47,17 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       <span hidden data-pagefind-meta="toolId">{tool.id}</span>
       <p>{tool.description}</p>
 
-      {discovery && (
-        <div class="experimental-note" data-pagefind-ignore>
-          <strong>Experimental Hub discovery.</strong> This listing was found automatically from LM Studio Hub. Capability, runtime, and risk metadata may be inferred and should be reviewed before being treated as verified.
+      {hasInferredMetadata && (
+        <div class="metadata-note" data-pagefind-ignore>
+          Some capability, runtime, or risk signals on this listing were inferred from public source metadata to improve discovery. Inferred values may be incomplete; use the official plugin page as the source of truth.
         </div>
       )}
 
       <div class="detail-section">
-        <h2>{discovery ? 'Detected capabilities' : 'Categories'}</h2>
+        <h2>{inferred?.capabilities ? 'Detected capabilities' : 'Capabilities'}</h2>
+        {inferred?.capabilities && (
+          <p class="section-note">These capabilities were inferred from the plugin's public Hub metadata.</p>
+        )}
         <div class="badges">
           {tool.categories.map((category) => <span class="badge" data-pagefind-filter={`category:${category}`}>{category}</span>)}
         </div>
@@ -60,6 +74,9 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
 
       <div class="detail-section">
         <h2>Platforms</h2>
+        {inferred?.platforms && (
+          <p class="section-note">Platform support was inferred from public metadata.</p>
+        )}
         <div class="platforms">
           {tool.platforms.length > 0
             ? tool.platforms.map((platform) => <span class="badge" data-pagefind-filter={`platform:${platform}`}>{platform}</span>)
@@ -80,17 +97,52 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
 
     <aside class="detail-sidebar" data-pagefind-ignore>
       <div class="detail-row"><span>Type</span><strong>{typeLabel}</strong></div>
-      <div class="detail-row"><span>Source</span><strong>{discovery ? 'LM Studio Hub discovery' : 'Curated listing'}</strong></div>
-      <div class="detail-row"><span>Execution</span><strong>{yesNoUnknown(tool.runtime.local, 'Local', 'Remote / hybrid')}</strong></div>
-      <div class="detail-row"><span>Network</span><strong>{yesNoUnknown(tool.runtime.networkRequired, 'Required', 'Not required')}</strong></div>
-      <div class="detail-row"><span>API key</span><strong>{yesNoUnknown(tool.runtime.apiKeyRequired, 'Required', 'Not required')}</strong></div>
+      <div class="detail-row"><span>Source</span><strong>{sourceLabel}</strong></div>
+      <div class="detail-row">
+        <span>Execution</span>
+        <strong>
+          {yesNoUnknown(tool.runtime.local, 'Local', 'Remote / hybrid')}
+          {inferred?.runtime && tool.runtime.local !== 'unknown' && <small>Inferred</small>}
+        </strong>
+      </div>
+      <div class="detail-row">
+        <span>Network</span>
+        <strong>
+          {yesNoUnknown(tool.runtime.networkRequired, 'Required', 'Not required')}
+          {inferred?.runtime && tool.runtime.networkRequired !== 'unknown' && <small>Inferred</small>}
+        </strong>
+      </div>
+      <div class="detail-row">
+        <span>API key</span>
+        <strong>
+          {yesNoUnknown(tool.runtime.apiKeyRequired, 'Required', 'Not required')}
+          {inferred?.runtime && tool.runtime.apiKeyRequired !== 'unknown' && <small>Inferred</small>}
+        </strong>
+      </div>
       <div class="detail-row"><span>Author</span><strong>{tool.author.handle ?? tool.author.name}</strong></div>
-      {discovery && typeof tool.source.downloads === 'number' && <div class="detail-row"><span>Downloads</span><strong>{tool.source.downloads}</strong></div>}
-      {discovery && typeof tool.source.likes === 'number' && <div class="detail-row"><span>Likes</span><strong>{tool.source.likes}</strong></div>}
-      {discovery && tool.source.updatedAt && <div class="detail-row"><span>Hub updated</span><strong>{new Date(tool.source.updatedAt).toLocaleDateString('en-AU')}</strong></div>}
+      {typeof tool.source.downloads === 'number' && <div class="detail-row"><span>Downloads</span><strong>{tool.source.downloads}</strong></div>}
+      {typeof tool.source.likes === 'number' && <div class="detail-row"><span>Likes</span><strong>{tool.source.likes}</strong></div>}
+      {tool.source.updatedAt && <div class="detail-row"><span>Updated</span><strong>{new Date(tool.source.updatedAt).toLocaleDateString('en-AU')}</strong></div>}
 
       <a class="primary-button" href={tool.links.homepage} rel="external">Open official page</a>
       {tool.links.repository && <a class="secondary-link" href={tool.links.repository}>View source repository →</a>}
     </aside>
   </main>
+
+  <style>
+    .detail-row strong {
+      display: inline-flex;
+      align-items: flex-end;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .detail-row small {
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+  </style>
 </BaseLayout>
