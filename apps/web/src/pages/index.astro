@@ -1,7 +1,59 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ToolCard from '../components/ToolCard.astro';
-import { categories, enrichedToolCount, lmStudioHubCount, platforms, tools } from '../lib/catalog';
+import {
+  categories,
+  enrichedToolCount,
+  lmStudioHubCount,
+  mcpRegistryCount,
+  platforms,
+  tools,
+  type Tool,
+} from '../lib/catalog';
+import { withBase } from '../lib/site-path';
+
+const PAGE_SIZE = 48;
+
+function metadataQuality(tool: Tool): number {
+  const knownRuntimeValues = [
+    tool.runtime.local,
+    tool.runtime.networkRequired,
+    tool.runtime.apiKeyRequired,
+  ].filter((value) => value !== 'unknown').length;
+
+  return (
+    (tool.description.startsWith('No description provided') ? 0 : 1) +
+    (tool.categories.some((category) => category !== 'uncategorized') ? 2 : 0) +
+    knownRuntimeValues +
+    (tool.platforms.length > 0 ? 1 : 0)
+  );
+}
+
+function freshnessScore(tool: Tool): number {
+  const updated = Date.parse(tool.source.updatedAt ?? '') || 0;
+  if (!updated) return 0;
+  const ageDays = Math.max(0, (Date.now() - updated) / 86_400_000);
+  return Math.max(0, 12 - ageDays / 30);
+}
+
+function recommendationScore(tool: Tool): number {
+  return (
+    Math.log1p(tool.source.downloads ?? 0) * 10 +
+    (tool.source.likes ?? 0) * 5 +
+    metadataQuality(tool) * 4 +
+    freshnessScore(tool)
+  );
+}
+
+const initialTools = [...tools]
+  .sort(
+    (a, b) =>
+      recommendationScore(b) - recommendationScore(a) ||
+      a.name.localeCompare(b.name),
+  )
+  .slice(0, PAGE_SIZE);
+const initialVisible = Math.min(PAGE_SIZE, tools.length);
+const browseUrl = withBase('browse.json');
 ---
 
 <BaseLayout>
@@ -14,7 +66,13 @@ import { categories, enrichedToolCount, lmStudioHubCount, platforms, tools } fro
       </p>
     </section>
 
-    <section class="site-shell marketplace-panel" id="tools" aria-labelledby="tools-heading">
+    <section
+      class="site-shell marketplace-panel"
+      id="tools"
+      aria-labelledby="tools-heading"
+      data-browse-url={browseUrl}
+      data-page-size={PAGE_SIZE}
+    >
       <div class="filters">
         <input class="search-input" id="tool-search" type="search" placeholder="Search video, files, coding…" aria-label="Search tools" />
 
@@ -39,7 +97,7 @@ import { categories, enrichedToolCount, lmStudioHubCount, platforms, tools } fro
         <div>
           <strong id="tools-heading">Browse tools</strong>
           <span class="source-summary">
-            {lmStudioHubCount} LM Studio Hub listings · {enrichedToolCount} enriched
+            {lmStudioHubCount} LM Studio Hub · {mcpRegistryCount} MCP Registry · {enrichedToolCount} enriched
           </span>
         </div>
         <div class="marketplace-actions">
@@ -53,42 +111,147 @@ import { categories, enrichedToolCount, lmStudioHubCount, platforms, tools } fro
         </div>
       </div>
 
-      {lmStudioHubCount > 0 && (
+      {(lmStudioHubCount > 0 || mcpRegistryCount > 0) && (
         <div class="catalogue-note">
-          Listings are sourced from LM Studio Hub and deduplicated by plugin family. Capability, runtime, and risk signals may be inferred when available; the official plugin page remains the source of truth.
+          Listings are sourced from upstream registries: LM Studio Hub for native plugins and the official MCP Registry for MCP servers. Registry presence determines discoverability; Local AI Tools adds normalization and discovery metadata without acting as an allowlist.
         </div>
       )}
 
       <div class="tool-grid" id="tool-grid">
-        {tools.map((tool) => <ToolCard tool={tool} />)}
+        {initialTools.map((tool) => <ToolCard tool={tool} />)}
       </div>
 
       <div class="empty-state" id="empty-state">
         No tools match those filters yet. Try a broader search.
       </div>
+
+      <div class="load-more-row" id="load-more-row" hidden={tools.length <= PAGE_SIZE}>
+        <span id="results-status">Showing {initialVisible} of {tools.length}</span>
+        <button class="load-more-button" id="load-more" type="button">Load more</button>
+      </div>
+
+      <template id="tool-card-template">
+        <article class="tool-card">
+          <div class="card-topline" data-role="topline">
+            <span class="badge" data-role="type"></span>
+            <span class="badge source" data-role="source"></span>
+          </div>
+          <div>
+            <h2><a data-role="title"></a></h2>
+            <p data-role="description"></p>
+          </div>
+          <div class="badges" data-role="tags"></div>
+          <div class="card-spacer"></div>
+          <div class="card-footer">
+            <span data-role="meta"></span>
+            <a class="card-link" data-role="link">View tool →</a>
+          </div>
+        </article>
+      </template>
     </section>
   </main>
 
   <script type="module" is:inline>
+    const panel = document.querySelector('#tools');
     const searchInput = document.querySelector('#tool-search');
     const typeFilter = document.querySelector('#type-filter');
     const categoryFilter = document.querySelector('#category-filter');
     const platformFilter = document.querySelector('#platform-filter');
     const sortFilter = document.querySelector('#sort-filter');
-    const cards = [...document.querySelectorAll('[data-tool-card]')];
-    const originalOrder = new Map(cards.map((card, index) => [card, index]));
     const count = document.querySelector('#result-count');
     const empty = document.querySelector('#empty-state');
     const grid = document.querySelector('#tool-grid');
+    const loadMoreRow = document.querySelector('#load-more-row');
+    const loadMoreButton = document.querySelector('#load-more');
+    const resultsStatus = document.querySelector('#results-status');
+    const cardTemplate = document.querySelector('#tool-card-template');
+    const pageSize = Number(panel.dataset.pageSize || 48);
+    const browseUrl = panel.dataset.browseUrl;
 
-    let pagefind = null;
-    try {
-      const pagefindUrl = new URL('_pagefind/pagefind.js', document.baseURI).href;
-      pagefind = await import(pagefindUrl);
-      await pagefind.init?.();
-    } catch {
-      // Pagefind is created after production builds. Local filtering keeps dev usable.
-    }
+    let allTools = null;
+    let currentResults = null;
+    let visibleLimit = pageSize;
+    let searchTimer = null;
+
+    const sourceLabel = (kind) =>
+      kind === 'lmstudio-hub'
+        ? 'LM Studio Hub'
+        : kind === 'mcp-registry'
+          ? 'MCP Registry'
+          : kind === 'community'
+            ? 'Community'
+            : 'Manual listing';
+
+    const addBadge = (container, text, extraClass = '') => {
+      const badge = document.createElement('span');
+      badge.className = `badge${extraClass ? ` ${extraClass}` : ''}`;
+      badge.textContent = text;
+      container.append(badge);
+    };
+
+    const makeCard = (tool) => {
+      const card = cardTemplate.content.firstElementChild.cloneNode(true);
+      const topline = card.querySelector('[data-role="topline"]');
+      card.querySelector('[data-role="type"]').textContent =
+        tool.type === 'lmstudio-plugin' ? 'LM Studio Plugin' : 'MCP Server';
+      card.querySelector('[data-role="source"]').textContent = sourceLabel(tool.source.kind);
+
+      if (tool.runtime.local === true) addBadge(topline, 'Fully local', 'good');
+      if (tool.runtime.local === false) addBadge(topline, 'Remote');
+      if (tool.runtime.apiKeyRequired === false) addBadge(topline, 'No API key', 'good');
+
+      const link = new URL(tool.href, document.baseURI).href;
+      const title = card.querySelector('[data-role="title"]');
+      title.textContent = tool.name;
+      title.href = link;
+      card.querySelector('[data-role="description"]').textContent = tool.description;
+
+      const tagContainer = card.querySelector('[data-role="tags"]');
+      const visibleCategories = tool.categories.filter((category) => category !== 'uncategorized');
+      const displayTags = visibleCategories.length > 0 ? visibleCategories : tool.type === 'mcp' ? tool.tags : [];
+      for (const tag of displayTags.slice(0, 4)) addBadge(tagContainer, tag);
+      tagContainer.hidden = displayTags.length === 0;
+
+      const meta = [];
+      if (tool.version) meta.push(`v${tool.version}`);
+      if (typeof tool.source.downloads === 'number') meta.push(`${tool.source.downloads} downloads`);
+      meta.push(`by ${tool.author}`);
+      card.querySelector('[data-role="meta"]').textContent = meta.join(' · ');
+      const cardLink = card.querySelector('[data-role="link"]');
+      cardLink.href = link;
+
+      return card;
+    };
+
+    const buildSearchText = (tool) =>
+      [
+        tool.name,
+        tool.description,
+        tool.author,
+        sourceLabel(tool.source.kind),
+        tool.type,
+        ...tool.categories,
+        ...tool.tags,
+        ...tool.platforms,
+      ]
+        .join(' ')
+        .toLowerCase();
+
+    const ensureTools = async () => {
+      if (allTools) return allTools;
+      loadMoreButton.disabled = true;
+      loadMoreButton.textContent = 'Loading…';
+
+      const response = await fetch(browseUrl);
+      if (!response.ok) throw new Error(`Browse index request failed: ${response.status}`);
+      const payload = await response.json();
+      if (!Array.isArray(payload.tools)) throw new Error('Browse index is invalid');
+
+      allTools = payload.tools.map((tool) => ({ ...tool, searchText: buildSearchText(tool) }));
+      loadMoreButton.disabled = false;
+      loadMoreButton.textContent = 'Load more';
+      return allTools;
+    };
 
     const values = () => ({
       query: searchInput.value.trim().toLowerCase(),
@@ -97,106 +260,99 @@ import { categories, enrichedToolCount, lmStudioHubCount, platforms, tools } fro
       platform: platformFilter.value,
     });
 
-    const localMatches = (card, filters) => {
-      const categories = card.dataset.category.split(',').filter(Boolean);
-      const platforms = card.dataset.platform.split(',').filter(Boolean);
+    const matches = (tool, filters) =>
+      (!filters.query || tool.searchText.includes(filters.query)) &&
+      (!filters.type || tool.type === filters.type) &&
+      (!filters.category || tool.categories.includes(filters.category)) &&
+      (!filters.platform || tool.platforms.includes(filters.platform));
+
+    const numeric = (value) => Number(value || 0);
+    const updatedAt = (tool) => Date.parse(tool.source.updatedAt || '') || 0;
+    const byName = (a, b) => a.name.localeCompare(b.name);
+
+    const metadataQuality = (tool) => {
+      const knownRuntimeValues = [
+        tool.runtime.local,
+        tool.runtime.networkRequired,
+        tool.runtime.apiKeyRequired,
+      ].filter((value) => value !== 'unknown').length;
       return (
-        (!filters.query || card.dataset.search.includes(filters.query)) &&
-        (!filters.type || card.dataset.type === filters.type) &&
-        (!filters.category || categories.includes(filters.category)) &&
-        (!filters.platform || platforms.includes(filters.platform))
+        (tool.description.startsWith('No description provided') ? 0 : 1) +
+        (tool.categories.some((category) => category !== 'uncategorized') ? 2 : 0) +
+        knownRuntimeValues +
+        (tool.platforms.length > 0 ? 1 : 0)
       );
     };
 
-    const numeric = (value) => Number(value || 0);
-    const updatedAt = (card) => Date.parse(card.dataset.updatedAt || '') || 0;
-    const byName = (a, b) => (a.dataset.name || '').localeCompare(b.dataset.name || '');
-
-    const freshnessScore = (card) => {
-      const updated = updatedAt(card);
+    const freshnessScore = (tool) => {
+      const updated = updatedAt(tool);
       if (!updated) return 0;
       const ageDays = Math.max(0, (Date.now() - updated) / 86_400_000);
       return Math.max(0, 12 - ageDays / 30);
     };
 
-    const recommendationScore = (card) =>
-      Math.log1p(numeric(card.dataset.downloads)) * 10 +
-      numeric(card.dataset.likes) * 5 +
-      numeric(card.dataset.metadataQuality) * 4 +
-      freshnessScore(card);
+    const recommendationScore = (tool) =>
+      Math.log1p(numeric(tool.source.downloads)) * 10 +
+      numeric(tool.source.likes) * 5 +
+      metadataQuality(tool) * 4 +
+      freshnessScore(tool);
 
-    const compareCards = (a, b) => {
+    const compareTools = (a, b) => {
       const mode = sortFilter.value;
-
       if (mode === 'name') return byName(a, b);
-
-      if (mode === 'recent') {
-        return (
-          updatedAt(b) - updatedAt(a) ||
-          numeric(b.dataset.downloads) - numeric(a.dataset.downloads) ||
-          byName(a, b)
-        );
-      }
-
+      if (mode === 'recent') return updatedAt(b) - updatedAt(a) || byName(a, b);
       if (mode === 'popular') {
         return (
-          numeric(b.dataset.downloads) - numeric(a.dataset.downloads) ||
-          numeric(b.dataset.likes) - numeric(a.dataset.likes) ||
+          numeric(b.source.downloads) - numeric(a.source.downloads) ||
+          numeric(b.source.likes) - numeric(a.source.likes) ||
           byName(a, b)
         );
       }
-
-      return (
-        recommendationScore(b) - recommendationScore(a) ||
-        originalOrder.get(a) - originalOrder.get(b)
-      );
+      return recommendationScore(b) - recommendationScore(a) || byName(a, b);
     };
 
-    const applySort = () => {
-      [...cards].sort(compareCards).forEach((card) => grid.append(card));
+    const render = () => {
+      const results = currentResults ?? [];
+      const visible = results.slice(0, visibleLimit);
+      grid.replaceChildren(...visible.map(makeCard));
+
+      count.textContent = `${results.length} ${results.length === 1 ? 'tool' : 'tools'}`;
+      empty.style.display = results.length ? 'none' : 'block';
+      grid.style.display = results.length ? 'grid' : 'none';
+      resultsStatus.textContent = `Showing ${visible.length} of ${results.length}`;
+      loadMoreRow.hidden = results.length === 0 || visible.length >= results.length;
     };
 
-    async function applyFilters() {
-      const filters = values();
-      let matchingIds = null;
-
-      if (pagefind) {
-        const pagefindFilters = {};
-        if (filters.type) pagefindFilters.type = filters.type;
-        if (filters.category) pagefindFilters.category = filters.category;
-        if (filters.platform) pagefindFilters.platform = filters.platform;
-
-        try {
-          const result = await pagefind.search(filters.query || null, { filters: pagefindFilters });
-          const resultData = await Promise.all(result.results.map((item) => item.data()));
-          matchingIds = new Set(resultData.map((item) => item.meta.toolId).filter(Boolean));
-        } catch {
-          matchingIds = null;
-        }
+    const refresh = async (resetLimit = true) => {
+      try {
+        const catalogue = await ensureTools();
+        const filters = values();
+        currentResults = catalogue.filter((tool) => matches(tool, filters)).sort(compareTools);
+        if (resetLimit) visibleLimit = pageSize;
+        render();
+      } catch (error) {
+        console.error(error);
+        loadMoreButton.disabled = false;
+        loadMoreButton.textContent = 'Retry';
+        resultsStatus.textContent = 'Could not load the full catalogue';
+        loadMoreRow.hidden = false;
       }
+    };
 
-      let visible = 0;
-      for (const card of cards) {
-        const show = matchingIds ? matchingIds.has(card.dataset.id) : localMatches(card, filters);
-        card.hidden = !show;
-        if (show) visible += 1;
-      }
-
-      applySort();
-      count.textContent = `${visible} ${visible === 1 ? 'tool' : 'tools'}`;
-      empty.style.display = visible ? 'none' : 'block';
-      grid.style.display = visible ? 'grid' : 'none';
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => refresh(true), 140);
+    });
+    for (const control of [typeFilter, categoryFilter, platformFilter, sortFilter]) {
+      control.addEventListener('change', () => refresh(true));
     }
-
-    for (const control of [searchInput, typeFilter, categoryFilter, platformFilter]) {
-      control.addEventListener(control === searchInput ? 'input' : 'change', applyFilters);
-    }
-
-    sortFilter.addEventListener('change', applySort);
-    applySort();
+    loadMoreButton.addEventListener('click', async () => {
+      visibleLimit += pageSize;
+      await refresh(false);
+    });
   </script>
 
-  <style>
+  <style is:global>
     .filters {
       grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(130px, 0.32fr));
     }
@@ -222,11 +378,73 @@ import { categories, enrichedToolCount, lmStudioHubCount, platforms, tools } fro
       min-height: 2.4rem;
     }
 
+    .badge.source {
+      color: var(--accent);
+      border-color: rgb(125 211 252 / 22%);
+      background: rgb(125 211 252 / 5%);
+    }
+
+    .tool-card {
+      min-height: 240px;
+    }
+
+    .tool-card h2 {
+      line-height: 1.2;
+    }
+
+    .tool-card h2 a:hover {
+      color: var(--accent);
+    }
+
+    .tool-card p {
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 4;
+    }
+
+    .load-more-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 0 1.1rem 1.4rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .load-more-row[hidden] {
+      display: none;
+    }
+
+    .load-more-button {
+      min-height: 2.5rem;
+      border: 1px solid var(--border);
+      border-radius: 0.7rem;
+      padding: 0 1rem;
+      color: var(--text);
+      background: #09101a;
+      cursor: pointer;
+    }
+
+    .load-more-button:hover:not(:disabled) {
+      border-color: var(--accent-strong);
+    }
+
+    .load-more-button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
     @media (max-width: 620px) {
       .marketplace-actions {
         width: 100%;
         align-items: center;
         justify-content: space-between;
+      }
+
+      .load-more-row {
+        flex-direction: column;
       }
     }
   </style>
