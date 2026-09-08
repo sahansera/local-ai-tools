@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="apps/web/public/app-icon.svg" alt="Local AI Tools icon" width="128" height="128" />
+</p>
+
 # Local AI Tools
 
 Open-source marketplace for discovering LM Studio-compatible plugins, MCP servers, and other local AI tools.
