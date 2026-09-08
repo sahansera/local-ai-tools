@@ -53,3 +53,8 @@ jobs:
           SITE_URL: https://sahansera.github.io
           SITE_BASE: /local-ai-tools
         run: pnpm build
+
+      - name: Verify GitHub Pages routes
+        run: |
+          grep -q 'href="/local-ai-tools/tools/' apps/web/dist/index.html
+          ! grep -q '/local-ai-toolstools/' apps/web/dist/index.html
