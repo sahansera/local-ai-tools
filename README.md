@@ -10,6 +10,8 @@ Local AI Tools is a lightweight discovery layer for local-AI integrations. The w
 
 The project deliberately starts static and GitHub-native: YAML catalogue data, schema validation, generated JSON, Astro, GitHub Actions, and no database or application backend.
 
+The marketplace is **provenance-first rather than curation-gated**. Public tools are discoverable from their upstream ecosystems, then normalized, deduplicated, enriched, and ranked with transparent signals. Local AI Tools does not decide which valid upstream tools users are allowed to discover.
+
 ## Repository layout
 
 ```text
@@ -20,7 +22,7 @@ packages/
   schema/    Shared Tool schema
   catalog/   YAML loading, validation, generation
   shared/    Shared utilities
-data/tools/  Contributor-authored catalogue entries
+data/tools/  Contributor-authored metadata records and overrides
 generated/   Generated catalogue artifacts
 scripts/     Discovery and maintenance experiments
 ```
@@ -42,7 +44,7 @@ pnpm generate:catalog
 pnpm check
 ```
 
-`pnpm dev` always works with the curated YAML catalogue. If a local `generated/lmstudio-enriched.json` snapshot exists, qualified Hub discoveries are merged into the UI automatically.
+`pnpm dev` always works with contributor-authored catalogue records. If local LM Studio discovery/enrichment snapshots exist, the web app merges them into the same catalogue automatically.
 
 To refresh Hub discovery/enrichment and start the marketplace in one command:
 
@@ -56,13 +58,15 @@ For a production-style static build that includes a fresh Hub snapshot:
 pnpm build:hub
 ```
 
-Hub-discovered entries are visually marked as experimental, can be filtered separately from curated listings, and never overwrite a curated tool with the same ID.
+The UI uses the public LM Studio Hub discovery snapshot as the source of visible native-plugin families. Fork families are deduplicated to one representative. Enrichment adds capability, runtime, and risk signals where available but does not determine whether a valid discovered plugin is visible.
+
+Contributor-authored YAML records are not an allowlist. They can provide higher-quality metadata for known tools. If the same tool also exists in LM Studio Hub, Local AI Tools keeps one listing, retains LM Studio Hub as the provenance, and merges Hub popularity/update metadata into that record.
 
 ## LM Studio Hub discovery and enrichment
 
 LM Studio Hub exposes a public artifact feed at `https://lmstudio.ai/api/v1/artifacts`. The feed includes native plugin records together with owner/name, description, downloads, likes, forks, update timestamps, revision information, and canonical Hub URLs.
 
-These endpoints are currently treated as **undocumented and experimental**. Discovery and enrichment output is review-first and is never promoted into the curated YAML catalogue automatically.
+These endpoints are currently treated as **undocumented** and may change. Local AI Tools therefore keeps discovery and enrichment code isolated and treats inferred metadata conservatively.
 
 ### Discover native plugins
 
@@ -73,10 +77,12 @@ pnpm discover:lmstudio
 This writes `generated/lmstudio-discovery.json` locally and prints the highest-ranked plugin families. It:
 
 - keeps public artifacts whose Hub type is `plugin`
-- preserves Hub metadata for inspection
+- preserves Hub metadata for indexing and inspection
 - groups obvious forks into families
-- ranks candidates with a transparent engagement-based discovery score
+- calculates an engagement-based discovery score used to choose a family representative
 - keeps the generated snapshot out of Git
+
+The marketplace can use every deduplicated family from this snapshot; the score does not act as an inclusion threshold.
 
 ### Enrich and classify plugin families
 
@@ -86,16 +92,16 @@ pnpm enrich:lmstudio
 
 The command refreshes discovery first, then enriches the top 100 plugin-family representatives. Use `pnpm enrich:lmstudio -- --all` to process every discovered family, or run the enrichment script directly with `--limit N` while experimenting.
 
-The enrichment step attempts to fetch the per-artifact Hub JSON endpoint and combines that material with discovery metadata. Transparent heuristic rules then produce reviewable metadata for:
+The enrichment step attempts to fetch the per-artifact Hub JSON endpoint and combines that material with discovery metadata. Transparent heuristic rules then produce metadata for:
 
 - capabilities such as memory, context management, video, web search, files, coding, images, audio, research, time and agent tooling
 - risk signals such as filesystem read/write, shell execution, network access, credentials and telemetry
 - conservative runtime fields for local execution, network requirements and API-key requirements
 - evidence excerpts and confidence for every matched capability or risk
 
-Unknown values stay `unknown`; absence of a detected signal is not treated as proof that a capability or risk does not exist.
+Unknown values stay `unknown`; absence of a detected signal is not treated as proof that a capability or risk does not exist. Inferred values are labelled in the detail UI, and the upstream plugin page remains the source of truth.
 
-The generated review snapshot is `generated/lmstudio-enriched.json` and remains ignored by Git.
+The generated enrichment snapshot is `generated/lmstudio-enriched.json` and remains ignored by Git.
 
 ### Evaluate search quality
 
@@ -111,6 +117,12 @@ pnpm search:lmstudio -- coding
 ```
 
 This is an evaluation tool, not the production marketplace ranking. It weights capability matches more strongly than raw popularity so we can inspect whether the enrichment pipeline is actually solving capability-oriented discovery.
+
+## Marketplace ranking
+
+The default **Recommended** order is calculated from signals such as Hub engagement, recency, and metadata completeness. It does not privilege contributor-authored records. Users can switch to explicit sorts such as **Popular**, **Recently updated**, and **Name A–Z**.
+
+The product principle is simple: expose useful facts and signals, then let users decide which tools fit their needs.
 
 ## Current milestones
 
