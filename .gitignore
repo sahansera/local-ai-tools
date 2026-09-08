@@ -33,6 +33,9 @@ dist/
 .output/
 out/
 
+# Experimental discovery snapshots
+generated/lmstudio-discovery.json
+
 # TypeScript
 *.tsbuildinfo
 
