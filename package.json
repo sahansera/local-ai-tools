@@ -14,7 +14,7 @@
     "generate:catalog": "pnpm --filter @local-ai-tools/catalog generate",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --write apps/web/src/lib/catalog.ts && git diff -- apps/web/src/lib/catalog.ts && prettier --check .",
     "search:lmstudio": "tsx scripts/search-lmstudio.ts",
     "test": "tsx --test scripts/*.test.ts && pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",
