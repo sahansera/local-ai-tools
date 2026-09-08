@@ -1,7 +1,5 @@
 export type LmStudioCompatibilityStatus =
-  | "ready"
-  | "setup-required"
-  | "unknown";
+  "ready" | "setup-required" | "unknown";
 
 export interface RegistryInput {
   name?: string;
@@ -106,7 +104,10 @@ function placeholder(label: string): string {
   return `<${label.replaceAll(/[^a-zA-Z0-9_-]/g, "_").toUpperCase()}>`;
 }
 
-function resolveInput(input: RegistryInput, fallback: string): {
+function resolveInput(
+  input: RegistryInput,
+  fallback: string,
+): {
   value?: string;
   requiredInput?: string;
 } {
@@ -143,10 +144,10 @@ function resolveValues(
 function argumentNeedsValue(argument: RegistryArgument): boolean {
   return Boolean(
     argument.valueHint ||
-      argument.placeholder ||
-      argument.format ||
-      argument.choices?.length ||
-      argument.description,
+    argument.placeholder ||
+    argument.format ||
+    argument.choices?.length ||
+    argument.description,
   );
 }
 
@@ -302,10 +303,7 @@ function fromRemote(
   const remote = remotes[0];
   const url = resolveTemplate(remote.url as string, remote.variables);
   const headers = resolveValues(remote.headers, "HEADER");
-  const requiredInputs = [
-    ...url.requiredInputs,
-    ...headers.requiredInputs,
-  ];
+  const requiredInputs = [...url.requiredInputs, ...headers.requiredInputs];
   const config: LmStudioServerConfig = { url: url.value };
   if (Object.keys(headers.values).length > 0) config.headers = headers.values;
 
@@ -352,7 +350,9 @@ function preferredPackage(
   );
 
   for (const registryType of PACKAGE_PRIORITY) {
-    const matches = supported.filter((pkg) => pkg.registryType === registryType);
+    const matches = supported.filter(
+      (pkg) => pkg.registryType === registryType,
+    );
     if (matches.length === 1) return matches[0];
     if (matches.length > 1) return null;
   }
