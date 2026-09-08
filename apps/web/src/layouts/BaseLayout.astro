@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { withBase } from '../lib/site-path';
 
 interface Props {
   title?: string;
@@ -10,7 +11,8 @@ const {
   title = 'Local AI Tools',
   description = 'Discover LM Studio-compatible plugins, MCP servers, and other local AI tools.',
 } = Astro.props;
-const base = import.meta.env.BASE_URL;
+const homeHref = withBase();
+const browseHref = `${homeHref}#tools`;
 ---
 
 <html lang="en">
@@ -23,12 +25,12 @@ const base = import.meta.env.BASE_URL;
   </head>
   <body>
     <header class="site-shell site-header">
-      <a class="brand" href={base}>
+      <a class="brand" href={homeHref}>
         <span class="brand-mark">⌁</span>
         <span>Local AI Tools</span>
       </a>
       <nav class="header-links" aria-label="Primary">
-        <a href={`${base}#tools`}>Browse</a>
+        <a href={browseHref}>Browse</a>
         <a
           class="github-link"
           href="https://github.com/sahansera/local-ai-tools"
