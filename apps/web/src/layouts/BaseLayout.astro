@@ -13,7 +13,7 @@ const {
 } = Astro.props;
 const homeHref = withBase();
 const browseHref = `${homeHref}#tools`;
-const appIconHref = withBase('app-icon.svg');
+const appIconHref = withBase('app-icon.png');
 const manifestHref = withBase('site.webmanifest');
 ---
 
@@ -24,7 +24,7 @@ const manifestHref = withBase('site.webmanifest');
     <meta name="description" content={description} />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#4c3ff1" />
-    <link rel="icon" href={appIconHref} type="image/svg+xml" />
+    <link rel="icon" href={appIconHref} type="image/png" />
     <link rel="apple-touch-icon" href={appIconHref} />
     <link rel="manifest" href={manifestHref} />
     <title>{title}</title>
