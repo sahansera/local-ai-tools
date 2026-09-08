@@ -140,7 +140,7 @@ select {
 
 .filters {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(150px, 0.35fr));
+  grid-template-columns: minmax(220px, 1fr) repeat(4, minmax(130px, 0.32fr));
   gap: 0.75rem;
   padding: 1rem;
   border-bottom: 1px solid var(--border);
@@ -173,6 +173,29 @@ select {
   padding: 1rem 1.1rem 0;
   color: var(--muted);
   font-size: 0.86rem;
+}
+
+.marketplace-meta > div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.source-summary {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.discovery-banner {
+  margin: 0.9rem 1.1rem 0;
+  border: 1px solid rgb(251 191 36 / 20%);
+  border-radius: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  color: #d9c58f;
+  background: rgb(251 191 36 / 4%);
+  font-size: 0.78rem;
+  line-height: 1.5;
 }
 
 .tool-grid {
@@ -227,6 +250,18 @@ select {
   color: var(--success);
   border-color: rgb(134 239 172 / 22%);
   background: rgb(134 239 172 / 5%);
+}
+
+.badge.experimental {
+  color: #f5d58a;
+  border-color: rgb(251 191 36 / 24%);
+  background: rgb(251 191 36 / 6%);
+}
+
+.badge.risk {
+  color: #f0b6a9;
+  border-color: rgb(251 113 133 / 20%);
+  background: rgb(251 113 133 / 5%);
 }
 
 .tool-card h2 {
@@ -292,6 +327,18 @@ select {
   line-height: 1.75;
 }
 
+.experimental-note {
+  max-width: 760px;
+  margin-top: 1.4rem;
+  border: 1px solid rgb(251 191 36 / 20%);
+  border-radius: 0.85rem;
+  padding: 0.85rem 1rem;
+  color: #d9c58f;
+  background: rgb(251 191 36 / 4%);
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
 .detail-section {
   margin-top: 2.5rem;
 }
@@ -299,6 +346,14 @@ select {
 .detail-section h2 {
   margin-bottom: 0.9rem;
   font-size: 1.05rem;
+}
+
+.section-note {
+  max-width: 700px;
+  margin: -0.25rem 0 0.9rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.55;
 }
 
 .detail-sidebar {
