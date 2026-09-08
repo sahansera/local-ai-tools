@@ -12,6 +12,7 @@ export interface RegistryInput {
   isSecret?: boolean;
   format?: string;
   valueHint?: string;
+  placeholder?: string;
   choices?: string[];
 }
 
@@ -36,6 +37,7 @@ export interface RegistryRemote {
   type?: string;
   url?: string;
   headers?: RegistryInput[];
+  variables?: Record<string, RegistryInput>;
 }
 
 export interface RegistryServerForLmStudio {
@@ -73,7 +75,17 @@ interface ResolvedArguments {
   requiredInputs: string[];
 }
 
+interface ResolvedTemplate {
+  value: string;
+  requiredInputs: string[];
+}
+
 const PACKAGE_PRIORITY = ["npm", "pypi", "nuget"] as const;
+const COMMAND_BY_REGISTRY: Record<string, string> = {
+  npm: "npx",
+  pypi: "uvx",
+  nuget: "dnx",
+};
 
 function installName(serverName: string): string {
   const raw = serverName.split("/").at(-1) || "mcp-server";
@@ -82,11 +94,31 @@ function installName(serverName: string): string {
 }
 
 function inputLabel(input: RegistryInput, fallback: string): string {
-  return input.name?.trim() || input.valueHint?.trim() || fallback;
+  return (
+    input.name?.trim() ||
+    input.valueHint?.trim() ||
+    input.placeholder?.trim() ||
+    fallback
+  );
 }
 
 function placeholder(label: string): string {
   return `<${label.replaceAll(/[^a-zA-Z0-9_-]/g, "_").toUpperCase()}>`;
+}
+
+function resolveInput(input: RegistryInput, fallback: string): {
+  value?: string;
+  requiredInput?: string;
+} {
+  if (typeof input.value === "string") return { value: input.value };
+  if (typeof input.default === "string") return { value: input.default };
+
+  if (input.isRequired) {
+    const label = inputLabel(input, fallback);
+    return { value: placeholder(label), requiredInput: label };
+  }
+
+  return {};
 }
 
 function resolveValues(
@@ -100,21 +132,9 @@ function resolveValues(
     const name = input.name?.trim();
     if (!name) continue;
 
-    if (typeof input.value === "string") {
-      values[name] = input.value;
-      continue;
-    }
-
-    if (typeof input.default === "string") {
-      values[name] = input.default;
-      continue;
-    }
-
-    if (input.isRequired) {
-      const label = inputLabel(input, `${fallbackPrefix}_${index + 1}`);
-      values[name] = placeholder(label);
-      requiredInputs.push(label);
-    }
+    const resolved = resolveInput(input, `${fallbackPrefix}_${index + 1}`);
+    if (resolved.value !== undefined) values[name] = resolved.value;
+    if (resolved.requiredInput) requiredInputs.push(resolved.requiredInput);
   }
 
   return { values, requiredInputs };
@@ -123,6 +143,7 @@ function resolveValues(
 function argumentNeedsValue(argument: RegistryArgument): boolean {
   return Boolean(
     argument.valueHint ||
+      argument.placeholder ||
       argument.format ||
       argument.choices?.length ||
       argument.description,
@@ -147,11 +168,16 @@ function resolveArguments(
     if (argument.type === "named") {
       const name = argument.name?.trim();
       if (!name) continue;
-      args.push(name);
 
       if (fixedValue !== undefined) {
-        args.push(fixedValue);
-      } else if (argument.isRequired && argumentNeedsValue(argument)) {
+        args.push(name, fixedValue);
+        continue;
+      }
+
+      if (!argument.isRequired) continue;
+
+      args.push(name);
+      if (argumentNeedsValue(argument)) {
         const label = inputLabel(argument, `${fallbackPrefix}_${index + 1}`);
         args.push(placeholder(label));
         requiredInputs.push(label);
@@ -174,6 +200,32 @@ function resolveArguments(
   return { args, requiredInputs };
 }
 
+function resolveTemplate(
+  value: string,
+  variables: Record<string, RegistryInput> | undefined,
+): ResolvedTemplate {
+  const requiredInputs: string[] = [];
+  const resolvedValue = value.replaceAll(
+    /\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g,
+    (_match, variableName: string) => {
+      const definition = variables?.[variableName];
+      if (definition) {
+        const resolved = resolveInput(definition, variableName);
+        if (resolved.requiredInput) requiredInputs.push(resolved.requiredInput);
+        if (resolved.value !== undefined) return resolved.value;
+      }
+
+      requiredInputs.push(variableName);
+      return placeholder(variableName);
+    },
+  );
+
+  return {
+    value: resolvedValue,
+    requiredInputs: [...new Set(requiredInputs)],
+  };
+}
+
 function packageSpec(pkg: RegistryPackage): string | null {
   if (!pkg.identifier) return null;
 
@@ -193,16 +245,13 @@ function packageSpec(pkg: RegistryPackage): string | null {
 }
 
 function packageCommand(pkg: RegistryPackage): string | null {
-  switch (pkg.registryType) {
-    case "npm":
-      return "npx";
-    case "pypi":
-      return "uvx";
-    case "nuget":
-      return "dnx";
-    default:
-      return null;
-  }
+  const defaultCommand = pkg.registryType
+    ? COMMAND_BY_REGISTRY[pkg.registryType]
+    : undefined;
+  if (!defaultCommand) return null;
+
+  if (!pkg.runtimeHint) return defaultCommand;
+  return pkg.runtimeHint === defaultCommand ? pkg.runtimeHint : null;
 }
 
 function packageRequirement(pkg: RegistryPackage): string {
@@ -212,7 +261,7 @@ function packageRequirement(pkg: RegistryPackage): string {
     case "pypi":
       return "uv with uvx available on PATH";
     case "nuget":
-      return ".NET with dnx available on PATH";
+      return ".NET 10+ with dnx available on PATH";
     default:
       return `${pkg.registryType ?? "Package runtime"} available on PATH`;
   }
@@ -251,20 +300,25 @@ function fromRemote(
   }
 
   const remote = remotes[0];
+  const url = resolveTemplate(remote.url as string, remote.variables);
   const headers = resolveValues(remote.headers, "HEADER");
-  const config: LmStudioServerConfig = { url: remote.url };
+  const requiredInputs = [
+    ...url.requiredInputs,
+    ...headers.requiredInputs,
+  ];
+  const config: LmStudioServerConfig = { url: url.value };
   if (Object.keys(headers.values).length > 0) config.headers = headers.values;
 
-  if (headers.requiredInputs.length > 0) {
+  if (requiredInputs.length > 0) {
     return {
       status: "setup-required",
       mode: "remote",
       installName: name,
       reason:
-        "LM Studio supports this standard-HTTP MCP, but required header values must be filled in before installation.",
+        "LM Studio supports this standard-HTTP MCP, but required URL or header values must be filled in before installation.",
       config,
       requirements: [],
-      requiredInputs: headers.requiredInputs,
+      requiredInputs: [...new Set(requiredInputs)],
     };
   }
 
@@ -290,12 +344,14 @@ function preferredPackage(
       PACKAGE_PRIORITY.includes(
         pkg.registryType as (typeof PACKAGE_PRIORITY)[number],
       ) &&
-      Boolean(pkg.identifier),
+      Boolean(pkg.identifier) &&
+      Boolean(packageCommand(pkg)),
   );
 
   for (const registryType of PACKAGE_PRIORITY) {
-    const match = supported.find((pkg) => pkg.registryType === registryType);
-    if (match) return match;
+    const matches = supported.filter((pkg) => pkg.registryType === registryType);
+    if (matches.length === 1) return matches[0];
+    if (matches.length > 1) return null;
   }
 
   return null;
@@ -321,7 +377,11 @@ function fromPackage(
   ];
 
   const args = [...runtimeArgs.args];
-  if (pkg.registryType === "npm" && !args.includes("-y") && !args.includes("--yes")) {
+  if (
+    pkg.registryType === "npm" &&
+    !args.includes("-y") &&
+    !args.includes("--yes")
+  ) {
     args.unshift("-y");
   }
   args.push(spec);
@@ -350,7 +410,7 @@ function fromPackage(
         "The Registry provides enough stdio package metadata for an LM Studio config template, but required values must be supplied first.",
       config,
       requirements,
-      requiredInputs,
+      requiredInputs: [...new Set(requiredInputs)],
     };
   }
 
