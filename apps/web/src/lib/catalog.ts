@@ -1,6 +1,12 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import catalogData from "../../../../generated/catalog.json";
+import {
+  evaluateLmStudioCompatibility,
+  type LmStudioCompatibility,
+  type RegistryPackage,
+  type RegistryRemote,
+} from "./lmstudio-mcp";
 
 export type RuntimeValue = boolean | "unknown";
 export type ToolSourceKind =
@@ -52,6 +58,7 @@ export interface Tool {
   platforms: Array<"macos" | "windows" | "linux">;
   source: ToolSource;
   setup?: ToolSetup;
+  lmStudio?: LmStudioCompatibility;
   risks?: string[];
 }
 
@@ -107,20 +114,6 @@ interface HubEnrichedSnapshot {
   plugins?: HubEnrichedPlugin[];
 }
 
-interface McpRegistryPackage {
-  registryType?: string;
-  identifier?: string;
-  runtimeHint?: string;
-  transport?: {
-    type?: string;
-  };
-}
-
-interface McpRegistryRemote {
-  type?: string;
-  url?: string;
-}
-
 interface McpRegistryServerDetail {
   name?: string;
   title?: string;
@@ -131,8 +124,8 @@ interface McpRegistryServerDetail {
     url?: string;
     source?: string;
   };
-  packages?: McpRegistryPackage[];
-  remotes?: McpRegistryRemote[];
+  packages?: RegistryPackage[];
+  remotes?: RegistryRemote[];
 }
 
 interface McpRegistryServerResponse {
@@ -291,6 +284,11 @@ function toMcpTool(entry: McpRegistryServerResponse): Tool | null {
   const displayName =
     server.title?.trim() || server.name.split("/").at(-1) || server.name;
   const registryApiUrl = `https://registry.modelcontextprotocol.io/v0.1/servers/${encodeURIComponent(server.name)}/versions/latest`;
+  const lmStudio = evaluateLmStudioCompatibility({
+    name: server.name,
+    packages,
+    remotes,
+  });
 
   return {
     schemaVersion: 1,
@@ -303,7 +301,11 @@ function toMcpTool(entry: McpRegistryServerResponse): Tool | null {
       handle: author,
     },
     categories: ["uncategorized"],
-    tags: unique([...packageTypes, ...transports]),
+    tags: unique([
+      ...packageTypes,
+      ...transports,
+      `lm-studio-${lmStudio.status}`,
+    ]),
     links: {
       homepage: server.websiteUrl || repository || registryApiUrl,
       repository,
@@ -329,6 +331,7 @@ function toMcpTool(entry: McpRegistryServerResponse): Tool | null {
       packageTypes,
       transports,
     },
+    lmStudio,
   };
 }
 
@@ -396,6 +399,15 @@ export const lmStudioHubCount = tools.filter(
 ).length;
 export const mcpRegistryCount = tools.filter(
   (tool) => tool.source.kind === "mcp-registry",
+).length;
+export const lmStudioReadyMcpCount = tools.filter(
+  (tool) => tool.type === "mcp" && tool.lmStudio?.status === "ready",
+).length;
+export const lmStudioSetupMcpCount = tools.filter(
+  (tool) => tool.type === "mcp" && tool.lmStudio?.status === "setup-required",
+).length;
+export const lmStudioUnknownMcpCount = tools.filter(
+  (tool) => tool.type === "mcp" && tool.lmStudio?.status === "unknown",
 ).length;
 export const enrichedToolCount = tools.filter((tool) =>
   Boolean(tool.source.inferred),
