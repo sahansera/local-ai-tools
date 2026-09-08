@@ -130,6 +130,24 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
   </main>
 
   <style>
+    .badge.source {
+      color: var(--accent);
+      border-color: rgb(125 211 252 / 22%);
+      background: rgb(125 211 252 / 5%);
+    }
+
+    .metadata-note {
+      max-width: 760px;
+      margin-top: 1.4rem;
+      border: 1px solid rgb(125 211 252 / 18%);
+      border-radius: 0.85rem;
+      padding: 0.85rem 1rem;
+      color: var(--muted);
+      background: rgb(125 211 252 / 4%);
+      font-size: 0.86rem;
+      line-height: 1.6;
+    }
+
     .detail-row strong {
       display: inline-flex;
       align-items: flex-end;
