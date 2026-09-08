@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="apps/web/public/app-icon.svg" alt="Local AI Tools icon" width="128" height="128" />
+  <img src="apps/web/public/app-icon.png" alt="Local AI Tools icon" width="128" height="128" />
 </p>
 
 # Local AI Tools
