@@ -4,10 +4,7 @@ import catalogData from "../../../../generated/catalog.json";
 
 export type RuntimeValue = boolean | "unknown";
 export type ToolSourceKind =
-  | "lmstudio-hub"
-  | "mcp-registry"
-  | "community"
-  | "manual";
+  "lmstudio-hub" | "mcp-registry" | "community" | "manual";
 
 export interface ToolInference {
   capabilities?: boolean;
