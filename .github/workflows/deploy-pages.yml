@@ -39,11 +39,11 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Build Hub-backed marketplace
+      - name: Build marketplace with fresh registries
         env:
           SITE_URL: ${{ vars.SITE_URL || 'https://sahansera.github.io' }}
           SITE_BASE: ${{ vars.SITE_BASE || '/local-ai-tools' }}
-        run: pnpm build:hub
+        run: pnpm build:marketplace
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v4
