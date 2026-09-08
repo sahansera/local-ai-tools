@@ -62,6 +62,25 @@ The UI uses the public LM Studio Hub discovery snapshot as the source of visible
 
 Contributor-authored YAML records are not an allowlist. They can provide higher-quality metadata for known tools. If the same tool also exists in LM Studio Hub, Local AI Tools keeps one listing, retains LM Studio Hub as the provenance, and merges Hub popularity/update metadata into that record.
 
+## Deployment
+
+GitHub Pages deployment is handled by `.github/workflows/deploy-pages.yml` on pushes to `main` and manual workflow runs. The production workflow refreshes LM Studio Hub discovery/enrichment before building the Astro/Pagefind site, then deploys `apps/web/dist` through the official GitHub Pages artifact flow.
+
+The default project Pages target is:
+
+```text
+https://sahansera.github.io/local-ai-tools/
+```
+
+Astro and internal links are base-path-aware so the same build can later move to a custom domain. Optional repository variables can override the defaults without changing code:
+
+```text
+SITE_URL=https://example.com
+SITE_BASE=/
+```
+
+The Hub-backed build intentionally fails if the upstream refresh fails so an existing good deployment is not replaced with a partial catalogue.
+
 ## LM Studio Hub discovery and enrichment
 
 LM Studio Hub exposes a public artifact feed at `https://lmstudio.ai/api/v1/artifacts`. The feed includes native plugin records together with owner/name, description, downloads, likes, forks, update timestamps, revision information, and canonical Hub URLs.

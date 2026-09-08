@@ -7,6 +7,7 @@ interface Props {
 
 const { tool } = Astro.props;
 const slug = toolSlug(tool);
+const toolHref = `${import.meta.env.BASE_URL}tools/${slug}/`;
 const sourceLabel =
   tool.source.kind === 'lmstudio-hub'
     ? 'LM Studio Hub'
@@ -61,7 +62,7 @@ const metadataQuality =
   </div>
 
   <div>
-    <h2><a href={`/tools/${slug}/`}>{tool.name}</a></h2>
+    <h2><a href={toolHref}>{tool.name}</a></h2>
     <p>{tool.description}</p>
   </div>
 
@@ -78,7 +79,7 @@ const metadataQuality =
         : ''}
       by {tool.author.handle ?? tool.author.name}
     </span>
-    <a class="card-link" href={`/tools/${slug}/`}>View tool →</a>
+    <a class="card-link" href={toolHref}>View tool →</a>
   </div>
 </article>
 
