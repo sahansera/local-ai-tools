@@ -13,6 +13,8 @@ const {
 } = Astro.props;
 const homeHref = withBase();
 const browseHref = `${homeHref}#tools`;
+const appIconHref = withBase('app-icon.svg');
+const manifestHref = withBase('site.webmanifest');
 ---
 
 <html lang="en">
@@ -21,12 +23,16 @@ const browseHref = `${homeHref}#tools`;
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={description} />
     <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#4c3ff1" />
+    <link rel="icon" href={appIconHref} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href={appIconHref} />
+    <link rel="manifest" href={manifestHref} />
     <title>{title}</title>
   </head>
   <body>
     <header class="site-shell site-header">
       <a class="brand" href={homeHref}>
-        <span class="brand-mark">⌁</span>
+        <img class="brand-mark" src={appIconHref} alt="" width="32" height="32" aria-hidden="true" />
         <span>Local AI Tools</span>
       </a>
       <nav class="header-links" aria-label="Primary">
@@ -58,6 +64,17 @@ const browseHref = `${homeHref}#tools`;
 </html>
 
 <style>
+  .brand-mark {
+    display: block;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 0.65rem;
+    background: transparent;
+    box-shadow: 0 5px 16px rgb(37 49 156 / 28%);
+    object-fit: cover;
+  }
+
   .github-link {
     display: inline-flex;
     width: 1.9rem;
