@@ -59,3 +59,33 @@ const discovery = tool.source.kind === 'hub-discovery';
     <a class="card-link" href={`/tools/${slug}/`}>View tool →</a>
   </div>
 </article>
+
+<style>
+  .tool-card {
+    min-height: 240px;
+    transition:
+      transform 160ms ease,
+      border-color 160ms ease,
+      background 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .tool-card:hover {
+    box-shadow: 0 14px 36px rgb(0 0 0 / 22%);
+  }
+
+  .tool-card h2 {
+    line-height: 1.2;
+  }
+
+  .tool-card h2 a:hover {
+    color: var(--accent);
+  }
+
+  .tool-card p {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+  }
+</style>
