@@ -253,7 +253,9 @@ function toHubTool(
 }
 
 function unique(values: Array<string | undefined>): string[] {
-  return [...new Set(values.filter((value): value is string => Boolean(value)))];
+  return [
+    ...new Set(values.filter((value): value is string => Boolean(value))),
+  ];
 }
 
 function repositoryOwner(repositoryUrl?: string): string | undefined {
@@ -271,8 +273,7 @@ function toMcpTool(entry: McpRegistryServerResponse): Tool | null {
   const server = entry.server;
   if (!server?.name || !server.description || !server.version) return null;
 
-  const official =
-    entry._meta?.["io.modelcontextprotocol.registry/official"];
+  const official = entry._meta?.["io.modelcontextprotocol.registry/official"];
   if (official?.status === "deleted") return null;
 
   const packages = Array.isArray(server.packages) ? server.packages : [];
@@ -308,7 +309,12 @@ function toMcpTool(entry: McpRegistryServerResponse): Tool | null {
       repository,
     },
     runtime: {
-      local: hasPackages && !hasRemotes ? true : hasRemotes && !hasPackages ? false : "unknown",
+      local:
+        hasPackages && !hasRemotes
+          ? true
+          : hasRemotes && !hasPackages
+            ? false
+            : "unknown",
       networkRequired: hasRemotes && !hasPackages ? true : "unknown",
       apiKeyRequired: "unknown",
     },
