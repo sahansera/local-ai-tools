@@ -42,11 +42,27 @@ pnpm generate:catalog
 pnpm check
 ```
 
+`pnpm dev` always works with the curated YAML catalogue. If a local `generated/lmstudio-enriched.json` snapshot exists, qualified Hub discoveries are merged into the UI automatically.
+
+To refresh Hub discovery/enrichment and start the marketplace in one command:
+
+```bash
+pnpm dev:hub
+```
+
+For a production-style static build that includes a fresh Hub snapshot:
+
+```bash
+pnpm build:hub
+```
+
+Hub-discovered entries are visually marked as experimental, can be filtered separately from curated listings, and never overwrite a curated tool with the same ID.
+
 ## LM Studio Hub discovery and enrichment
 
 LM Studio Hub exposes a public artifact feed at `https://lmstudio.ai/api/v1/artifacts`. The feed includes native plugin records together with owner/name, description, downloads, likes, forks, update timestamps, revision information, and canonical Hub URLs.
 
-These endpoints are currently treated as **undocumented and experimental**. Discovery and enrichment output is review-only and is never added to the marketplace catalogue automatically.
+These endpoints are currently treated as **undocumented and experimental**. Discovery and enrichment output is review-first and is never promoted into the curated YAML catalogue automatically.
 
 ### Discover native plugins
 
