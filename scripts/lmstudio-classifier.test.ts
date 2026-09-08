@@ -45,7 +45,9 @@ test("does not interpret ordinary context tokens as credentials", () => {
 });
 
 test("web search implies network access but not necessarily an API key", () => {
-  const result = classifyPlugin("Web search plugin using public search engines to research current information.");
+  const result = classifyPlugin(
+    "Web search plugin using public search engines to research current information.",
+  );
 
   assert.ok(result.capabilities["web-search"]);
   assert.ok(result.risks["network-access"]);
