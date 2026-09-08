@@ -19,6 +19,12 @@ export const GET: APIRoute = () => {
       updatedAt: tool.source.updatedAt,
     },
     version: tool.setup?.version,
+    lmStudio: tool.lmStudio
+      ? {
+          status: tool.lmStudio.status,
+          mode: tool.lmStudio.mode,
+        }
+      : undefined,
     href: `tools/${toolSlug(tool)}/`,
   }));
 
