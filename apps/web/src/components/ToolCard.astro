@@ -24,11 +24,15 @@ const discovery = tool.source.kind === 'hub-discovery';
   class="tool-card"
   data-tool-card
   data-id={tool.id}
+  data-name={tool.name.toLowerCase()}
   data-search={searchable}
   data-type={tool.type}
   data-source={tool.source.kind}
   data-category={tool.categories.join(',')}
   data-platform={tool.platforms.join(',')}
+  data-downloads={tool.source.downloads ?? 0}
+  data-likes={tool.source.likes ?? 0}
+  data-updated-at={tool.source.updatedAt ?? ''}
 >
   <div class="card-topline">
     <span class="badge">{tool.type === 'lmstudio-plugin' ? 'LM Studio Plugin' : 'MCP Server'}</span>
