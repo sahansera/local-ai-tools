@@ -310,13 +310,16 @@ function fromRemote(
   if (Object.keys(headers.values).length > 0) config.headers = headers.values;
 
   if (requiredInputs.length > 0) {
+    const hasUnresolvedUrl = url.requiredInputs.length > 0;
     return {
       status: "setup-required",
       mode: "remote",
       installName: name,
-      reason:
-        "LM Studio supports this standard-HTTP MCP, but required URL or header values must be filled in before installation.",
+      reason: hasUnresolvedUrl
+        ? "LM Studio supports this standard-HTTP MCP, but the Registry URL contains required template values that must be resolved before installation."
+        : "LM Studio supports this standard-HTTP MCP. It can be added now, but required header values must be filled in before the server will work.",
       config,
+      deeplink: hasUnresolvedUrl ? undefined : buildDeeplink(name, config),
       requirements: [],
       requiredInputs: [...new Set(requiredInputs)],
     };
@@ -407,8 +410,9 @@ function fromPackage(
       mode: "stdio",
       installName: name,
       reason:
-        "The Registry provides enough stdio package metadata for an LM Studio config template, but required values must be supplied first.",
+        "The Registry provides a deterministic stdio package definition. It can be added to LM Studio now, but required values must be filled in before the server will work.",
       config,
+      deeplink: buildDeeplink(name, config),
       requirements,
       requiredInputs: [...new Set(requiredInputs)],
     };
