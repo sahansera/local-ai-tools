@@ -1,9 +1,6 @@
 import type { APIRoute } from "astro";
 import { toolSlug, tools } from "../lib/catalog";
-import {
-  lmStudioInstallUrl,
-  lmStudioStatus,
-} from "../lib/lmstudio-install";
+import { lmStudioInstallUrl, lmStudioStatus } from "../lib/lmstudio-install";
 
 export const GET: APIRoute = () => {
   const browseTools = tools.map((tool) => ({
