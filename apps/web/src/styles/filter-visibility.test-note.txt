@@ -1,0 +1,3 @@
+Regression covered by explicit CSS rule: .tool-card[hidden] { display: none; }
+
+The marketplace filter logic toggles the HTML hidden attribute and updates the result count. Without this author-level rule, .tool-card { display: flex } overrides the browser's default hidden styling, causing filtered cards to remain visible while the count is correct.
