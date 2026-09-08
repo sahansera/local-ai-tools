@@ -1,6 +1,12 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { tools, toolSlug, type RuntimeValue, type Tool } from '../../lib/catalog';
+import {
+  lmStudioInstallUrl,
+  lmStudioStatus,
+  lmStudioStatusLabel,
+  lmStudioStatusReason,
+} from '../../lib/lmstudio-install';
 
 export function getStaticPaths() {
   return tools.map((tool) => ({ params: { slug: toolSlug(tool) }, props: { tool } }));
@@ -25,6 +31,13 @@ const hasInferredMetadata = Boolean(
   inferred?.capabilities || inferred?.runtime || inferred?.risks || inferred?.platforms,
 );
 const visibleCategories = tool.categories.filter((category) => category !== 'uncategorized');
+const installUrl = lmStudioInstallUrl(tool);
+const compatibility = lmStudioStatus(tool);
+const compatibilityLabel = lmStudioStatusLabel(tool);
+const compatibilityReason = lmStudioStatusReason(tool);
+const configJson = tool.lmStudio?.config
+  ? JSON.stringify(tool.lmStudio.config, null, 2)
+  : undefined;
 
 function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
   if (value === true) return yes;
@@ -40,6 +53,9 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
         <span class="badge" data-pagefind-filter={`type:${tool.type}`}>{typeLabel}</span>
         <span hidden data-pagefind-filter={`source:${tool.source.kind}`}>{tool.source.kind}</span>
         <span class="badge source">{sourceLabel}</span>
+        <span class:list={['badge', compatibility === 'ready' && 'good', compatibility === 'setup-required' && 'setup']}>
+          {compatibilityLabel}
+        </span>
         {tool.runtime.local === true && <span class="badge good" data-pagefind-filter="local:true">Fully local</span>}
         {tool.runtime.local === false && <span class="badge">Remote</span>}
         {tool.runtime.apiKeyRequired === false && <span class="badge good" data-pagefind-filter="api-key:false">No API key</span>}
@@ -49,6 +65,53 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       <span hidden data-pagefind-meta="toolId">{tool.id}</span>
       <p>{tool.description}</p>
 
+      <div class="compatibility-panel">
+        <div>
+          <span class="compatibility-kicker">LM Studio compatibility</span>
+          <h2>{compatibilityLabel}</h2>
+          <p>{compatibilityReason}</p>
+        </div>
+        {installUrl
+          ? <a class="inline-install-button" href={installUrl}>Add to LM Studio</a>
+          : <span class="inline-install-button disabled" aria-disabled="true" title={compatibilityReason}>Add to LM Studio</span>}
+      </div>
+
+      {tool.type === 'mcp' && tool.lmStudio && (
+        <div class="detail-section">
+          <h2>LM Studio MCP configuration</h2>
+          {tool.lmStudio.mode && (
+            <p class="section-note">
+              Connection mode: <strong>{tool.lmStudio.mode === 'stdio' ? 'Local stdio' : 'Remote HTTP'}</strong>.
+            </p>
+          )}
+
+          {(tool.lmStudio.requirements?.length ?? 0) > 0 && (
+            <div class="compatibility-list">
+              <strong>Runtime requirements</strong>
+              <ul>
+                {tool.lmStudio.requirements.map((requirement) => <li>{requirement}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {(tool.lmStudio.requiredInputs?.length ?? 0) > 0 && (
+            <div class="compatibility-list">
+              <strong>Values required before installation</strong>
+              <ul>
+                {tool.lmStudio.requiredInputs.map((input) => <li>{input}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {configJson && (
+            <div class="config-preview">
+              <span>Generated LM Studio server entry</span>
+              <pre><code>{configJson}</code></pre>
+            </div>
+          )}
+        </div>
+      )}
+
       {hasInferredMetadata && (
         <div class="metadata-note" data-pagefind-ignore>
           Some capability, runtime, or risk signals on this listing were inferred from public source metadata to improve discovery. Inferred values may be incomplete; use the upstream project or registry page as the source of truth.
@@ -57,8 +120,8 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
 
       {tool.setup && (
         <div class="detail-section">
-          <h2>MCP setup</h2>
-          <p class="section-note">Setup metadata is taken directly from the official MCP Registry.</p>
+          <h2>MCP Registry metadata</h2>
+          <p class="section-note">Setup metadata below is taken directly from the official MCP Registry.</p>
           <div class="setup-grid">
             {tool.setup.version && (
               <div>
@@ -104,7 +167,7 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
         <div class="detail-section">
           <h2>{tool.type === 'mcp' ? 'Registry metadata' : 'Tags'}</h2>
           <div class="badges">
-            {tool.tags.map((tag) => <span class="badge">{tag}</span>)}
+            {tool.tags.filter((tag) => !tag.startsWith('lm-studio-')).map((tag) => <span class="badge">{tag}</span>)}
           </div>
         </div>
       )}
@@ -135,6 +198,7 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
     <aside class="detail-sidebar" data-pagefind-ignore>
       <div class="detail-row"><span>Type</span><strong>{typeLabel}</strong></div>
       <div class="detail-row"><span>Source</span><strong>{sourceLabel}</strong></div>
+      <div class="detail-row"><span>LM Studio</span><strong>{compatibilityLabel}</strong></div>
       {tool.setup?.version && <div class="detail-row"><span>Version</span><strong>v{tool.setup.version}</strong></div>}
       {tool.setup?.status && <div class="detail-row"><span>Registry status</span><strong>{tool.setup.status}</strong></div>}
       <div class="detail-row">
@@ -163,7 +227,10 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       {typeof tool.source.likes === 'number' && <div class="detail-row"><span>Likes</span><strong>{tool.source.likes}</strong></div>}
       {tool.source.updatedAt && <div class="detail-row"><span>Updated</span><strong>{new Date(tool.source.updatedAt).toLocaleDateString('en-AU')}</strong></div>}
 
-      <a class="primary-button" href={tool.links.homepage} rel="external">Open official page</a>
+      {installUrl
+        ? <a class="primary-button" href={installUrl}>Add to LM Studio</a>
+        : <span class="primary-button disabled-button" aria-disabled="true" title={compatibilityReason}>Add to LM Studio</span>}
+      <a class="secondary-link" href={tool.links.homepage} rel="external">Open official page →</a>
       {tool.links.repository && <a class="secondary-link" href={tool.links.repository}>View source repository →</a>}
     </aside>
   </main>
@@ -173,6 +240,99 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       color: var(--accent);
       border-color: rgb(125 211 252 / 22%);
       background: rgb(125 211 252 / 5%);
+    }
+
+    .badge.setup {
+      color: #f5d58a;
+      border-color: rgb(251 191 36 / 24%);
+      background: rgb(251 191 36 / 6%);
+    }
+
+    .compatibility-panel {
+      display: flex;
+      max-width: 760px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.25rem;
+      margin-top: 1.5rem;
+      border: 1px solid rgb(125 211 252 / 18%);
+      border-radius: 1rem;
+      padding: 1rem;
+      background: rgb(125 211 252 / 4%);
+    }
+
+    .compatibility-panel h2 {
+      margin: 0.2rem 0 0.35rem;
+      font-size: 1.1rem;
+    }
+
+    .compatibility-panel p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.55;
+    }
+
+    .compatibility-kicker,
+    .config-preview > span {
+      color: var(--accent);
+      font-size: 0.72rem;
+      font-weight: 750;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .inline-install-button {
+      display: inline-flex;
+      flex: 0 0 auto;
+      min-height: 2.6rem;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.72rem;
+      padding: 0 0.95rem;
+      background: var(--text);
+      color: var(--bg);
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .inline-install-button.disabled,
+    .disabled-button {
+      border: 1px solid var(--border);
+      background: #09101a;
+      color: var(--muted);
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    .compatibility-list {
+      max-width: 760px;
+      margin-top: 1rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .compatibility-list ul {
+      margin: 0.5rem 0 0;
+      padding-left: 1.25rem;
+    }
+
+    .config-preview {
+      max-width: 760px;
+      margin-top: 1rem;
+    }
+
+    .config-preview pre {
+      overflow-x: auto;
+      margin: 0.55rem 0 0;
+      border: 1px solid var(--border);
+      border-radius: 0.8rem;
+      padding: 1rem;
+      background: #070b12;
+      color: var(--text);
+      font-size: 0.8rem;
+      line-height: 1.55;
     }
 
     .metadata-note {
@@ -220,6 +380,13 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       font-weight: 600;
       letter-spacing: 0.02em;
       text-transform: uppercase;
+    }
+
+    @media (max-width: 700px) {
+      .compatibility-panel {
+        align-items: stretch;
+        flex-direction: column;
+      }
     }
   </style>
 </BaseLayout>
