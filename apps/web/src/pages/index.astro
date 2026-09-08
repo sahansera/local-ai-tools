@@ -1,7 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ToolCard from '../components/ToolCard.astro';
-import { categories, enrichedToolCount, lmStudioHubCount, platforms, tools } from '../lib/catalog';
+import {
+  categories,
+  enrichedToolCount,
+  lmStudioHubCount,
+  mcpRegistryCount,
+  platforms,
+  tools,
+} from '../lib/catalog';
 ---
 
 <BaseLayout>
@@ -39,7 +46,7 @@ import { categories, enrichedToolCount, lmStudioHubCount, platforms, tools } fro
         <div>
           <strong id="tools-heading">Browse tools</strong>
           <span class="source-summary">
-            {lmStudioHubCount} LM Studio Hub listings · {enrichedToolCount} enriched
+            {lmStudioHubCount} LM Studio Hub · {mcpRegistryCount} MCP Registry · {enrichedToolCount} enriched
           </span>
         </div>
         <div class="marketplace-actions">
@@ -53,9 +60,9 @@ import { categories, enrichedToolCount, lmStudioHubCount, platforms, tools } fro
         </div>
       </div>
 
-      {lmStudioHubCount > 0 && (
+      {(lmStudioHubCount > 0 || mcpRegistryCount > 0) && (
         <div class="catalogue-note">
-          Listings are sourced from LM Studio Hub and deduplicated by plugin family. Capability, runtime, and risk signals may be inferred when available; the official plugin page remains the source of truth.
+          Listings are sourced from upstream registries: LM Studio Hub for native plugins and the official MCP Registry for MCP servers. Registry presence determines discoverability; Local AI Tools adds normalization and discovery metadata without acting as an allowlist.
         </div>
       )}
 
