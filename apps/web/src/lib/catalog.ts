@@ -73,7 +73,9 @@ const hubSnapshotPath = fileURLToPath(
 
 function loadHubDiscoveries(): HubEnrichedPlugin[] {
   try {
-    const snapshot = JSON.parse(readFileSync(hubSnapshotPath, "utf8")) as HubEnrichedSnapshot;
+    const snapshot = JSON.parse(
+      readFileSync(hubSnapshotPath, "utf8"),
+    ) as HubEnrichedSnapshot;
     return Array.isArray(snapshot.plugins) ? snapshot.plugins : [];
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
@@ -86,7 +88,8 @@ function isUsefulHubCandidate(plugin: HubEnrichedPlugin): boolean {
   const description = plugin.description.trim();
   if (description.length < 20) return false;
 
-  const obviousNonProductName = /(?:^|[-_\s])(test|demo|example|placeholder)(?:$|[-_\s])/i;
+  const obviousNonProductName =
+    /(?:^|[-_\s])(test|demo|example|placeholder)(?:$|[-_\s])/i;
   if (obviousNonProductName.test(plugin.name)) return false;
 
   const capabilities = Object.keys(plugin.enrichment.capabilities);
@@ -140,7 +143,9 @@ const hubTools = loadHubDiscoveries()
 
 export const tools = [...curatedTools, ...hubTools];
 tools.sort((a, b) => {
-  if (a.source.kind !== b.source.kind) return a.source.kind === "curated" ? -1 : 1;
+  if (a.source.kind !== b.source.kind) {
+    return a.source.kind === "curated" ? -1 : 1;
+  }
   return a.name.localeCompare(b.name);
 });
 
