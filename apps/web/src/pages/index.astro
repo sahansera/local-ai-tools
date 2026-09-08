@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ToolCard from '../components/ToolCard.astro';
-import { categories, platforms, tools } from '../lib/catalog';
+import { categories, curatedCount, hubDiscoveryCount, platforms, tools } from '../lib/catalog';
 ---
 
 <BaseLayout>
@@ -24,6 +24,12 @@ import { categories, platforms, tools } from '../lib/catalog';
           <option value="mcp">MCP servers</option>
         </select>
 
+        <select class="filter-select" id="source-filter" aria-label="Filter by source">
+          <option value="">All sources</option>
+          <option value="curated">Curated</option>
+          <option value="hub-discovery">Hub discoveries</option>
+        </select>
+
         <select class="filter-select" id="category-filter" aria-label="Filter by category">
           <option value="">All categories</option>
           {categories.map((category) => <option value={category}>{category}</option>)}
@@ -36,9 +42,18 @@ import { categories, platforms, tools } from '../lib/catalog';
       </div>
 
       <div class="marketplace-meta">
-        <strong id="tools-heading">Browse tools</strong>
+        <div>
+          <strong id="tools-heading">Browse tools</strong>
+          <span class="source-summary">{curatedCount} curated · {hubDiscoveryCount} Hub discoveries</span>
+        </div>
         <span id="result-count">{tools.length} {tools.length === 1 ? 'tool' : 'tools'}</span>
       </div>
+
+      {hubDiscoveryCount > 0 && (
+        <div class="discovery-banner">
+          Hub discoveries are automatically sourced from LM Studio and may contain inferred metadata. Use the source filter to show only curated listings.
+        </div>
+      )}
 
       <div class="tool-grid" id="tool-grid">
         {tools.map((tool) => <ToolCard tool={tool} />)}
@@ -53,6 +68,7 @@ import { categories, platforms, tools } from '../lib/catalog';
   <script type="module" is:inline>
     const searchInput = document.querySelector('#tool-search');
     const typeFilter = document.querySelector('#type-filter');
+    const sourceFilter = document.querySelector('#source-filter');
     const categoryFilter = document.querySelector('#category-filter');
     const platformFilter = document.querySelector('#platform-filter');
     const cards = [...document.querySelectorAll('[data-tool-card]')];
@@ -72,16 +88,18 @@ import { categories, platforms, tools } from '../lib/catalog';
     const values = () => ({
       query: searchInput.value.trim().toLowerCase(),
       type: typeFilter.value,
+      source: sourceFilter.value,
       category: categoryFilter.value,
       platform: platformFilter.value,
     });
 
     const localMatches = (card, filters) => {
-      const categories = card.dataset.category.split(',');
-      const platforms = card.dataset.platform.split(',');
+      const categories = card.dataset.category.split(',').filter(Boolean);
+      const platforms = card.dataset.platform.split(',').filter(Boolean);
       return (
         (!filters.query || card.dataset.search.includes(filters.query)) &&
         (!filters.type || card.dataset.type === filters.type) &&
+        (!filters.source || card.dataset.source === filters.source) &&
         (!filters.category || categories.includes(filters.category)) &&
         (!filters.platform || platforms.includes(filters.platform))
       );
@@ -94,6 +112,7 @@ import { categories, platforms, tools } from '../lib/catalog';
       if (pagefind) {
         const pagefindFilters = {};
         if (filters.type) pagefindFilters.type = filters.type;
+        if (filters.source) pagefindFilters.source = filters.source;
         if (filters.category) pagefindFilters.category = filters.category;
         if (filters.platform) pagefindFilters.platform = filters.platform;
 
@@ -118,7 +137,7 @@ import { categories, platforms, tools } from '../lib/catalog';
       grid.style.display = visible ? 'grid' : 'none';
     }
 
-    for (const control of [searchInput, typeFilter, categoryFilter, platformFilter]) {
+    for (const control of [searchInput, typeFilter, sourceFilter, categoryFilter, platformFilter]) {
       control.addEventListener(control === searchInput ? 'input' : 'change', applyFilters);
     }
   </script>

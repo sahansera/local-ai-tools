@@ -5,8 +5,10 @@
   "packageManager": "pnpm@10.15.1",
   "scripts": {
     "build": "pnpm -r build",
+    "build:hub": "pnpm enrich:lmstudio && pnpm build",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm validate:catalog && pnpm build",
     "dev": "pnpm --filter @local-ai-tools/web dev",
+    "dev:hub": "pnpm enrich:lmstudio && pnpm dev",
     "discover:lmstudio": "tsx scripts/discover-lmstudio.ts",
     "enrich:lmstudio": "pnpm discover:lmstudio && tsx scripts/enrich-lmstudio.ts",
     "generate:catalog": "pnpm --filter @local-ai-tools/catalog generate",

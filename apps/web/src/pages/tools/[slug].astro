@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { tools, toolSlug, type Tool } from '../../lib/catalog';
+import { tools, toolSlug, type RuntimeValue, type Tool } from '../../lib/catalog';
 
 export function getStaticPaths() {
   return tools.map((tool) => ({ params: { slug: toolSlug(tool) }, props: { tool } }));
@@ -12,6 +12,13 @@ interface Props {
 
 const { tool } = Astro.props;
 const typeLabel = tool.type === 'lmstudio-plugin' ? 'LM Studio Plugin' : 'MCP Server';
+const discovery = tool.source.kind === 'hub-discovery';
+
+function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
+  if (value === true) return yes;
+  if (value === false) return no;
+  return 'Unknown';
+}
 ---
 
 <BaseLayout title={`${tool.name} — Local AI Tools`} description={tool.description}>
@@ -19,42 +26,68 @@ const typeLabel = tool.type === 'lmstudio-plugin' ? 'LM Studio Plugin' : 'MCP Se
     <article class="detail-main">
       <div class="badges">
         <span class="badge" data-pagefind-filter={`type:${tool.type}`}>{typeLabel}</span>
-        {tool.runtime.local && <span class="badge good" data-pagefind-filter="local:true">Fully local</span>}
-        {!tool.runtime.apiKeyRequired && <span class="badge good" data-pagefind-filter="api-key:false">No API key</span>}
+        <span hidden data-pagefind-filter={`source:${tool.source.kind}`}>{tool.source.kind}</span>
+        {discovery && <span class="badge experimental">Hub discovery · experimental</span>}
+        {tool.runtime.local === true && <span class="badge good" data-pagefind-filter="local:true">Fully local</span>}
+        {tool.runtime.apiKeyRequired === false && <span class="badge good" data-pagefind-filter="api-key:false">No API key</span>}
       </div>
 
       <h1 data-pagefind-meta="title">{tool.name}</h1>
       <span hidden data-pagefind-meta="toolId">{tool.id}</span>
       <p>{tool.description}</p>
 
+      {discovery && (
+        <div class="experimental-note" data-pagefind-ignore>
+          <strong>Experimental Hub discovery.</strong> This listing was found automatically from LM Studio Hub. Capability, runtime, and risk metadata may be inferred and should be reviewed before being treated as verified.
+        </div>
+      )}
+
       <div class="detail-section">
-        <h2>Categories</h2>
+        <h2>{discovery ? 'Detected capabilities' : 'Categories'}</h2>
         <div class="badges">
           {tool.categories.map((category) => <span class="badge" data-pagefind-filter={`category:${category}`}>{category}</span>)}
         </div>
       </div>
 
-      <div class="detail-section">
-        <h2>Tags</h2>
-        <div class="badges">
-          {tool.tags.map((tag) => <span class="badge">{tag}</span>)}
+      {tool.tags.length > 0 && (
+        <div class="detail-section">
+          <h2>Tags</h2>
+          <div class="badges">
+            {tool.tags.map((tag) => <span class="badge">{tag}</span>)}
+          </div>
         </div>
-      </div>
+      )}
 
       <div class="detail-section">
         <h2>Platforms</h2>
         <div class="platforms">
-          {tool.platforms.map((platform) => <span class="badge" data-pagefind-filter={`platform:${platform}`}>{platform}</span>)}
+          {tool.platforms.length > 0
+            ? tool.platforms.map((platform) => <span class="badge" data-pagefind-filter={`platform:${platform}`}>{platform}</span>)
+            : <span class="badge">Unknown</span>}
         </div>
       </div>
+
+      {(tool.risks?.length ?? 0) > 0 && (
+        <div class="detail-section">
+          <h2>Detected risk signals</h2>
+          <p class="section-note">These signals describe capabilities that may deserve extra review; they do not mean the plugin is unsafe.</p>
+          <div class="badges">
+            {tool.risks?.map((risk) => <span class="badge risk">⚠ {risk}</span>)}
+          </div>
+        </div>
+      )}
     </article>
 
     <aside class="detail-sidebar" data-pagefind-ignore>
       <div class="detail-row"><span>Type</span><strong>{typeLabel}</strong></div>
-      <div class="detail-row"><span>Execution</span><strong>{tool.runtime.local ? 'Local' : 'Remote / hybrid'}</strong></div>
-      <div class="detail-row"><span>Network</span><strong>{tool.runtime.networkRequired ? 'Required' : 'Not required'}</strong></div>
-      <div class="detail-row"><span>API key</span><strong>{tool.runtime.apiKeyRequired ? 'Required' : 'Not required'}</strong></div>
+      <div class="detail-row"><span>Source</span><strong>{discovery ? 'LM Studio Hub discovery' : 'Curated listing'}</strong></div>
+      <div class="detail-row"><span>Execution</span><strong>{yesNoUnknown(tool.runtime.local, 'Local', 'Remote / hybrid')}</strong></div>
+      <div class="detail-row"><span>Network</span><strong>{yesNoUnknown(tool.runtime.networkRequired, 'Required', 'Not required')}</strong></div>
+      <div class="detail-row"><span>API key</span><strong>{yesNoUnknown(tool.runtime.apiKeyRequired, 'Required', 'Not required')}</strong></div>
       <div class="detail-row"><span>Author</span><strong>{tool.author.handle ?? tool.author.name}</strong></div>
+      {discovery && typeof tool.source.downloads === 'number' && <div class="detail-row"><span>Downloads</span><strong>{tool.source.downloads}</strong></div>}
+      {discovery && typeof tool.source.likes === 'number' && <div class="detail-row"><span>Likes</span><strong>{tool.source.likes}</strong></div>}
+      {discovery && tool.source.updatedAt && <div class="detail-row"><span>Hub updated</span><strong>{new Date(tool.source.updatedAt).toLocaleDateString('en-AU')}</strong></div>}
 
       <a class="primary-button" href={tool.links.homepage} rel="external">Open official page</a>
       {tool.links.repository && <a class="secondary-link" href={tool.links.repository}>View source repository →</a>}
