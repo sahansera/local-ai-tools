@@ -3,13 +3,25 @@ import { fileURLToPath } from "node:url";
 import catalogData from "../../../../generated/catalog.json";
 
 export type RuntimeValue = boolean | "unknown";
+export type ToolSourceKind =
+  | "lmstudio-hub"
+  | "mcp-registry"
+  | "community"
+  | "manual";
+
+export interface ToolInference {
+  capabilities?: boolean;
+  runtime?: boolean;
+  risks?: boolean;
+  platforms?: boolean;
+}
 
 export interface ToolSource {
-  kind: "curated" | "hub-discovery";
-  experimental?: boolean;
+  kind: ToolSourceKind;
   downloads?: number;
   likes?: number;
   updatedAt?: string | null;
+  inferred?: ToolInference;
 }
 
 export interface Tool {
@@ -38,19 +50,38 @@ export interface Tool {
   risks?: string[];
 }
 
+interface RawCatalogSource {
+  type?: string;
+}
+
+type RawCatalogTool = Omit<Tool, "source"> & {
+  source?: RawCatalogSource;
+};
+
 interface HubEvidence {
   confidence?: "low" | "medium" | "high";
 }
 
-interface HubEnrichedPlugin {
+interface HubDiscoveryPlugin {
   identifier: string;
   owner: string;
   name: string;
   description: string;
   hubUrl: string;
   updatedAt: string | null;
+  createdAt?: string | null;
   downloads: number;
   likes: number;
+  forks?: number;
+  discussions?: number;
+  revision?: number | null;
+  staffPicked?: boolean;
+  forkedFrom?: string | null;
+  family: string;
+  score: number;
+}
+
+interface HubEnrichedPlugin extends HubDiscoveryPlugin {
   enrichment: {
     detailFetched: boolean;
     capabilities: Record<string, HubEvidence[]>;
@@ -63,49 +94,79 @@ interface HubEnrichedPlugin {
   };
 }
 
+interface HubDiscoverySnapshot {
+  plugins?: HubDiscoveryPlugin[];
+}
+
 interface HubEnrichedSnapshot {
   plugins?: HubEnrichedPlugin[];
 }
 
-const hubSnapshotPath = fileURLToPath(
+const hubDiscoveryPath = fileURLToPath(
+  new URL("../../../../generated/lmstudio-discovery.json", import.meta.url),
+);
+const hubEnrichedPath = fileURLToPath(
   new URL("../../../../generated/lmstudio-enriched.json", import.meta.url),
 );
 
-function loadHubDiscoveries(): HubEnrichedPlugin[] {
+function loadSnapshot<T extends { plugins?: unknown[] }>(path: string): T | null {
   try {
-    const snapshot = JSON.parse(
-      readFileSync(hubSnapshotPath, "utf8"),
-    ) as HubEnrichedSnapshot;
-    return Array.isArray(snapshot.plugins) ? snapshot.plugins : [];
+    return JSON.parse(readFileSync(path, "utf8")) as T;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
-    console.warn("Ignoring invalid LM Studio enrichment snapshot:", error);
-    return [];
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    console.warn(`Ignoring invalid generated snapshot at ${path}:`, error);
+    return null;
   }
 }
 
-function isUsefulHubCandidate(plugin: HubEnrichedPlugin): boolean {
-  const description = plugin.description.trim();
-  if (description.length < 20) return false;
+function familyRepresentatives(
+  plugins: HubDiscoveryPlugin[],
+): HubDiscoveryPlugin[] {
+  const families = new Map<string, HubDiscoveryPlugin>();
 
-  const obviousNonProductName =
-    /(?:^|[-_\s])(test|demo|example|placeholder)(?:$|[-_\s])/i;
-  if (obviousNonProductName.test(plugin.name)) return false;
+  for (const plugin of plugins) {
+    const current = families.get(plugin.family);
+    if (
+      !current ||
+      plugin.score > current.score ||
+      (plugin.score === current.score && plugin.downloads > current.downloads)
+    ) {
+      families.set(plugin.family, plugin);
+    }
+  }
 
-  const capabilities = Object.keys(plugin.enrichment.capabilities);
-  return capabilities.length > 0 || plugin.downloads >= 25;
+  return [...families.values()];
 }
 
-function toHubTool(plugin: HubEnrichedPlugin): Tool {
-  const capabilities = Object.keys(plugin.enrichment.capabilities);
-  const risks = Object.keys(plugin.enrichment.risks);
+function sourceKind(source?: RawCatalogSource): ToolSourceKind {
+  switch (source?.type) {
+    case "lmstudio-hub":
+      return "lmstudio-hub";
+    case "mcp-registry":
+      return "mcp-registry";
+    case "community":
+      return "community";
+    default:
+      return "manual";
+  }
+}
+
+function toHubTool(
+  plugin: HubDiscoveryPlugin,
+  enriched?: HubEnrichedPlugin,
+): Tool {
+  const capabilities = enriched
+    ? Object.keys(enriched.enrichment.capabilities)
+    : [];
+  const risks = enriched ? Object.keys(enriched.enrichment.risks) : [];
 
   return {
     schemaVersion: 1,
     id: plugin.identifier,
     name: plugin.name,
     type: "lmstudio-plugin",
-    description: plugin.description.trim(),
+    description:
+      plugin.description.trim() || "No description provided on LM Studio Hub.",
     author: {
       name: plugin.owner,
       handle: plugin.owner,
@@ -115,42 +176,77 @@ function toHubTool(plugin: HubEnrichedPlugin): Tool {
     links: {
       homepage: plugin.hubUrl || `https://lmstudio.ai/${plugin.identifier}`,
     },
-    runtime: plugin.enrichment.runtime,
+    runtime: enriched?.enrichment.runtime ?? {
+      local: "unknown",
+      networkRequired: "unknown",
+      apiKeyRequired: "unknown",
+    },
     platforms: [],
     source: {
-      kind: "hub-discovery",
-      experimental: true,
+      kind: "lmstudio-hub",
       downloads: plugin.downloads,
       likes: plugin.likes,
       updatedAt: plugin.updatedAt,
+      inferred: enriched
+        ? {
+            capabilities: true,
+            runtime: true,
+            risks: true,
+          }
+        : undefined,
     },
     risks,
   };
 }
 
-const curatedTools = (catalogData.tools as Omit<Tool, "source">[]).map(
-  (tool): Tool => ({
-    ...tool,
-    source: { kind: "curated" },
-  }),
+const discoverySnapshot = loadSnapshot<HubDiscoverySnapshot>(hubDiscoveryPath);
+const enrichedSnapshot = loadSnapshot<HubEnrichedSnapshot>(hubEnrichedPath);
+const discoveredPlugins = Array.isArray(discoverySnapshot?.plugins)
+  ? discoverySnapshot.plugins
+  : [];
+const enrichedPlugins = Array.isArray(enrichedSnapshot?.plugins)
+  ? enrichedSnapshot.plugins
+  : [];
+
+const discoveredById = new Map(
+  discoveredPlugins.map((plugin) => [plugin.identifier, plugin]),
+);
+const enrichedById = new Map(
+  enrichedPlugins.map((plugin) => [plugin.identifier, plugin]),
 );
 
-const curatedIds = new Set(curatedTools.map((tool) => tool.id));
-const hubTools = loadHubDiscoveries()
-  .filter(isUsefulHubCandidate)
-  .filter((plugin) => !curatedIds.has(plugin.identifier))
-  .map(toHubTool);
+const authoredTools = (catalogData.tools as RawCatalogTool[]).map(
+  (rawTool): Tool => {
+    const { source: rawSource, ...tool } = rawTool;
+    const discovered = discoveredById.get(rawTool.id);
 
-export const tools = [...curatedTools, ...hubTools];
-tools.sort((a, b) => {
-  if (a.source.kind !== b.source.kind) {
-    return a.source.kind === "curated" ? -1 : 1;
-  }
-  return a.name.localeCompare(b.name);
-});
+    return {
+      ...tool,
+      source: {
+        kind: sourceKind(rawSource),
+        downloads: discovered?.downloads,
+        likes: discovered?.likes,
+        updatedAt: discovered?.updatedAt,
+      },
+    };
+  },
+);
 
-export const curatedCount = curatedTools.length;
-export const hubDiscoveryCount = hubTools.length;
+const authoredIds = new Set(authoredTools.map((tool) => tool.id));
+const hubTools = familyRepresentatives(discoveredPlugins)
+  .filter((plugin) => !authoredIds.has(plugin.identifier))
+  .map((plugin) => toHubTool(plugin, enrichedById.get(plugin.identifier)));
+
+export const tools = [...authoredTools, ...hubTools].sort((a, b) =>
+  a.name.localeCompare(b.name),
+);
+
+export const lmStudioHubCount = tools.filter(
+  (tool) => tool.source.kind === "lmstudio-hub",
+).length;
+export const enrichedToolCount = tools.filter((tool) =>
+  Boolean(tool.source.inferred),
+).length;
 
 export function toolSlug(tool: Tool): string {
   const slashless = tool.id.replaceAll("/", "-");
