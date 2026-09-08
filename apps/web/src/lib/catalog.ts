@@ -233,8 +233,16 @@ const authoredTools = (catalogData.tools as RawCatalogTool[]).map(
 );
 
 const authoredIds = new Set(authoredTools.map((tool) => tool.id));
+const authoredFamilies = new Set(
+  authoredTools
+    .map((tool) => discoveredById.get(tool.id)?.family)
+    .filter((family): family is string => Boolean(family)),
+);
 const hubTools = familyRepresentatives(discoveredPlugins)
-  .filter((plugin) => !authoredIds.has(plugin.identifier))
+  .filter(
+    (plugin) =>
+      !authoredIds.has(plugin.identifier) && !authoredFamilies.has(plugin.family),
+  )
   .map((plugin) => toHubTool(plugin, enrichedById.get(plugin.identifier)));
 
 export const tools = [...authoredTools, ...hubTools].sort((a, b) =>
