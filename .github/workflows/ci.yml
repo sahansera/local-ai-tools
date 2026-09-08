@@ -36,11 +36,8 @@ jobs:
       - name: Generate catalogue
         run: pnpm generate:catalog
 
-      - name: Show formatter diff
-        run: |
-          pnpm exec prettier --write apps/web/src/lib/lmstudio-mcp.ts apps/web/src/pages/browse.json.ts
-          git diff -- apps/web/src/lib/lmstudio-mcp.ts apps/web/src/pages/browse.json.ts
-          exit 1
+      - name: Format check
+        run: pnpm format:check
 
       - name: Lint
         run: pnpm lint
