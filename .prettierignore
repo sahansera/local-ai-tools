@@ -1,3 +1,6 @@
 generated/
 pnpm-lock.yaml
 apps/web/src/styles/global.css
+scripts/enrich-lmstudio.ts
+scripts/lmstudio-classifier.ts
+scripts/search-lmstudio.ts
