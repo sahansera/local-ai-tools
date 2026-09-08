@@ -42,19 +42,19 @@ pnpm generate:catalog
 pnpm check
 ```
 
-## LM Studio Hub discovery experiment
+## LM Studio Hub discovery and enrichment
 
 LM Studio Hub exposes a public artifact feed at `https://lmstudio.ai/api/v1/artifacts`. The feed includes native plugin records together with owner/name, description, downloads, likes, forks, update timestamps, revision information, and canonical Hub URLs.
 
-The endpoint is currently treated as **undocumented and experimental**. Discovery output is never added to the public catalogue automatically.
+These endpoints are currently treated as **undocumented and experimental**. Discovery and enrichment output is review-only and is never added to the marketplace catalogue automatically.
 
-Run:
+### Discover native plugins
 
 ```bash
 pnpm discover:lmstudio
 ```
 
-This writes `generated/lmstudio-discovery.json` locally and prints the highest-ranked plugin families. The experiment:
+This writes `generated/lmstudio-discovery.json` locally and prints the highest-ranked plugin families. It:
 
 - keeps public artifacts whose Hub type is `plugin`
 - preserves Hub metadata for inspection
@@ -62,7 +62,39 @@ This writes `generated/lmstudio-discovery.json` locally and prints the highest-r
 - ranks candidates with a transparent engagement-based discovery score
 - keeps the generated snapshot out of Git
 
-The next step is to evaluate the candidates and decide which Hub signals and enrichment checks should become part of the marketplace ingestion workflow.
+### Enrich and classify plugin families
+
+```bash
+pnpm enrich:lmstudio
+```
+
+The command refreshes discovery first, then enriches the top 100 plugin-family representatives. Use `pnpm enrich:lmstudio -- --all` to process every discovered family, or run the enrichment script directly with `--limit N` while experimenting.
+
+The enrichment step attempts to fetch the per-artifact Hub JSON endpoint and combines that material with discovery metadata. Transparent heuristic rules then produce reviewable metadata for:
+
+- capabilities such as memory, context management, video, web search, files, coding, images, audio, research, time and agent tooling
+- risk signals such as filesystem read/write, shell execution, network access, credentials and telemetry
+- conservative runtime fields for local execution, network requirements and API-key requirements
+- evidence excerpts and confidence for every matched capability or risk
+
+Unknown values stay `unknown`; absence of a detected signal is not treated as proof that a capability or risk does not exist.
+
+The generated review snapshot is `generated/lmstudio-enriched.json` and remains ignored by Git.
+
+### Evaluate search quality
+
+After enrichment, try queries such as:
+
+```bash
+pnpm search:lmstudio -- memory
+pnpm search:lmstudio -- "context management"
+pnpm search:lmstudio -- video
+pnpm search:lmstudio -- "web search"
+pnpm search:lmstudio -- files
+pnpm search:lmstudio -- coding
+```
+
+This is an evaluation tool, not the production marketplace ranking. It weights capability matches more strongly than raw popularity so we can inspect whether the enrichment pipeline is actually solving capability-oriented discovery.
 
 ## Current milestones
 
