@@ -33,8 +33,10 @@ dist/
 .output/
 out/
 
-# Experimental discovery snapshots
+# Discovery snapshots
 generated/lmstudio-discovery.json
+generated/lmstudio-enriched.json
+generated/mcp-registry.json
 
 # TypeScript
 *.tsbuildinfo
