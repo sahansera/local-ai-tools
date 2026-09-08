@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ToolCard from '../components/ToolCard.astro';
-import { categories, curatedCount, hubDiscoveryCount, platforms, tools } from '../lib/catalog';
+import { categories, enrichedToolCount, lmStudioHubCount, platforms, tools } from '../lib/catalog';
 ---
 
 <BaseLayout>
@@ -24,12 +24,6 @@ import { categories, curatedCount, hubDiscoveryCount, platforms, tools } from '.
           <option value="mcp">MCP servers</option>
         </select>
 
-        <select class="filter-select" id="source-filter" aria-label="Filter by source">
-          <option value="">All sources</option>
-          <option value="curated">Curated</option>
-          <option value="hub-discovery">Hub discoveries</option>
-        </select>
-
         <select class="filter-select" id="category-filter" aria-label="Filter by category">
           <option value="">All categories</option>
           {categories.map((category) => <option value={category}>{category}</option>)}
@@ -44,7 +38,9 @@ import { categories, curatedCount, hubDiscoveryCount, platforms, tools } from '.
       <div class="marketplace-meta">
         <div>
           <strong id="tools-heading">Browse tools</strong>
-          <span class="source-summary">{curatedCount} curated · {hubDiscoveryCount} Hub discoveries</span>
+          <span class="source-summary">
+            {lmStudioHubCount} LM Studio Hub listings · {enrichedToolCount} enriched
+          </span>
         </div>
         <div class="marketplace-actions">
           <span id="result-count">{tools.length} {tools.length === 1 ? 'tool' : 'tools'}</span>
@@ -57,9 +53,9 @@ import { categories, curatedCount, hubDiscoveryCount, platforms, tools } from '.
         </div>
       </div>
 
-      {hubDiscoveryCount > 0 && (
-        <div class="discovery-banner">
-          Hub discoveries are automatically sourced from LM Studio and may contain inferred metadata. Use the source filter to show only curated listings.
+      {lmStudioHubCount > 0 && (
+        <div class="catalogue-note">
+          Listings are sourced from LM Studio Hub and deduplicated by plugin family. Capability, runtime, and risk signals may be inferred when available; the official plugin page remains the source of truth.
         </div>
       )}
 
@@ -76,7 +72,6 @@ import { categories, curatedCount, hubDiscoveryCount, platforms, tools } from '.
   <script type="module" is:inline>
     const searchInput = document.querySelector('#tool-search');
     const typeFilter = document.querySelector('#type-filter');
-    const sourceFilter = document.querySelector('#source-filter');
     const categoryFilter = document.querySelector('#category-filter');
     const platformFilter = document.querySelector('#platform-filter');
     const sortFilter = document.querySelector('#sort-filter');
@@ -98,7 +93,6 @@ import { categories, curatedCount, hubDiscoveryCount, platforms, tools } from '.
     const values = () => ({
       query: searchInput.value.trim().toLowerCase(),
       type: typeFilter.value,
-      source: sourceFilter.value,
       category: categoryFilter.value,
       platform: platformFilter.value,
     });
@@ -109,7 +103,6 @@ import { categories, curatedCount, hubDiscoveryCount, platforms, tools } from '.
       return (
         (!filters.query || card.dataset.search.includes(filters.query)) &&
         (!filters.type || card.dataset.type === filters.type) &&
-        (!filters.source || card.dataset.source === filters.source) &&
         (!filters.category || categories.includes(filters.category)) &&
         (!filters.platform || platforms.includes(filters.platform))
       );
@@ -118,6 +111,19 @@ import { categories, curatedCount, hubDiscoveryCount, platforms, tools } from '.
     const numeric = (value) => Number(value || 0);
     const updatedAt = (card) => Date.parse(card.dataset.updatedAt || '') || 0;
     const byName = (a, b) => (a.dataset.name || '').localeCompare(b.dataset.name || '');
+
+    const freshnessScore = (card) => {
+      const updated = updatedAt(card);
+      if (!updated) return 0;
+      const ageDays = Math.max(0, (Date.now() - updated) / 86_400_000);
+      return Math.max(0, 12 - ageDays / 30);
+    };
+
+    const recommendationScore = (card) =>
+      Math.log1p(numeric(card.dataset.downloads)) * 10 +
+      numeric(card.dataset.likes) * 5 +
+      numeric(card.dataset.metadataQuality) * 4 +
+      freshnessScore(card);
 
     const compareCards = (a, b) => {
       const mode = sortFilter.value;
@@ -140,13 +146,8 @@ import { categories, curatedCount, hubDiscoveryCount, platforms, tools } from '.
         );
       }
 
-      const curatedA = a.dataset.source === 'curated' ? 1 : 0;
-      const curatedB = b.dataset.source === 'curated' ? 1 : 0;
       return (
-        curatedB - curatedA ||
-        numeric(b.dataset.downloads) - numeric(a.dataset.downloads) ||
-        numeric(b.dataset.likes) - numeric(a.dataset.likes) ||
-        updatedAt(b) - updatedAt(a) ||
+        recommendationScore(b) - recommendationScore(a) ||
         originalOrder.get(a) - originalOrder.get(b)
       );
     };
@@ -162,7 +163,6 @@ import { categories, curatedCount, hubDiscoveryCount, platforms, tools } from '.
       if (pagefind) {
         const pagefindFilters = {};
         if (filters.type) pagefindFilters.type = filters.type;
-        if (filters.source) pagefindFilters.source = filters.source;
         if (filters.category) pagefindFilters.category = filters.category;
         if (filters.platform) pagefindFilters.platform = filters.platform;
 
@@ -188,7 +188,7 @@ import { categories, curatedCount, hubDiscoveryCount, platforms, tools } from '.
       grid.style.display = visible ? 'grid' : 'none';
     }
 
-    for (const control of [searchInput, typeFilter, sourceFilter, categoryFilter, platformFilter]) {
+    for (const control of [searchInput, typeFilter, categoryFilter, platformFilter]) {
       control.addEventListener(control === searchInput ? 'input' : 'change', applyFilters);
     }
 
@@ -197,6 +197,21 @@ import { categories, curatedCount, hubDiscoveryCount, platforms, tools } from '.
   </script>
 
   <style>
+    .filters {
+      grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(130px, 0.32fr));
+    }
+
+    .catalogue-note {
+      margin: 0.9rem 1.1rem 0;
+      border: 1px solid rgb(125 211 252 / 16%);
+      border-radius: 0.75rem;
+      padding: 0.7rem 0.85rem;
+      color: var(--muted);
+      background: rgb(125 211 252 / 3%);
+      font-size: 0.78rem;
+      line-height: 1.5;
+    }
+
     .marketplace-actions {
       justify-content: flex-end;
     }

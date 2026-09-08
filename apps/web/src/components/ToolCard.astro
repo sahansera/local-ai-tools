@@ -7,17 +7,34 @@ interface Props {
 
 const { tool } = Astro.props;
 const slug = toolSlug(tool);
+const sourceLabel =
+  tool.source.kind === 'lmstudio-hub'
+    ? 'LM Studio Hub'
+    : tool.source.kind === 'mcp-registry'
+      ? 'MCP Registry'
+      : tool.source.kind === 'community'
+        ? 'Community'
+        : 'Manual listing';
 const searchable = [
   tool.name,
   tool.description,
   tool.type,
-  tool.source.kind,
+  sourceLabel,
   ...tool.categories,
   ...tool.tags,
   ...tool.platforms,
   ...(tool.risks ?? []),
 ].join(' ').toLowerCase();
-const discovery = tool.source.kind === 'hub-discovery';
+const knownRuntimeValues = [
+  tool.runtime.local,
+  tool.runtime.networkRequired,
+  tool.runtime.apiKeyRequired,
+].filter((value) => value !== 'unknown').length;
+const metadataQuality =
+  (tool.description.startsWith('No description provided') ? 0 : 1) +
+  (tool.categories.some((category) => category !== 'uncategorized') ? 2 : 0) +
+  knownRuntimeValues +
+  (tool.platforms.length > 0 ? 1 : 0);
 ---
 
 <article
@@ -33,10 +50,11 @@ const discovery = tool.source.kind === 'hub-discovery';
   data-downloads={tool.source.downloads ?? 0}
   data-likes={tool.source.likes ?? 0}
   data-updated-at={tool.source.updatedAt ?? ''}
+  data-metadata-quality={metadataQuality}
 >
   <div class="card-topline">
     <span class="badge">{tool.type === 'lmstudio-plugin' ? 'LM Studio Plugin' : 'MCP Server'}</span>
-    {discovery && <span class="badge experimental">Hub discovery · experimental</span>}
+    <span class="badge source">{sourceLabel}</span>
     {tool.runtime.local === true && <span class="badge good">Fully local</span>}
     {tool.runtime.apiKeyRequired === false && <span class="badge good">No API key</span>}
     {(tool.risks?.length ?? 0) > 0 && <span class="badge risk">⚠ {tool.risks?.length} risk signal{tool.risks?.length === 1 ? '' : 's'}</span>}
@@ -55,7 +73,7 @@ const discovery = tool.source.kind === 'hub-discovery';
 
   <div class="card-footer">
     <span>
-      {discovery && typeof tool.source.downloads === 'number'
+      {typeof tool.source.downloads === 'number'
         ? `${tool.source.downloads} downloads · `
         : ''}
       by {tool.author.handle ?? tool.author.name}
@@ -76,6 +94,12 @@ const discovery = tool.source.kind === 'hub-discovery';
 
   .tool-card:hover {
     box-shadow: 0 14px 36px rgb(0 0 0 / 22%);
+  }
+
+  .badge.source {
+    color: var(--accent);
+    border-color: rgb(125 211 252 / 22%);
+    background: rgb(125 211 252 / 5%);
   }
 
   .tool-card h2 {
