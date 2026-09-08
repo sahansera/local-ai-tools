@@ -243,7 +243,8 @@ const authoredFamilies = new Set(
 const hubTools = familyRepresentatives(discoveredPlugins)
   .filter(
     (plugin) =>
-      !authoredIds.has(plugin.identifier) && !authoredFamilies.has(plugin.family),
+      !authoredIds.has(plugin.identifier) &&
+      !authoredFamilies.has(plugin.family),
   )
   .map((plugin) => toHubTool(plugin, enrichedById.get(plugin.identifier)));
 
