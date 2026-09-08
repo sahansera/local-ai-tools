@@ -23,7 +23,11 @@ export const GET: APIRoute = () => {
   }));
 
   return new Response(
-    JSON.stringify({ schemaVersion: 1, count: browseTools.length, tools: browseTools }),
+    JSON.stringify({
+      schemaVersion: 1,
+      count: browseTools.length,
+      tools: browseTools,
+    }),
     {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
