@@ -8,16 +8,23 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: github-pages
   cancel-in-progress: true
 
 jobs:
+  check:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/ci.yml
+
   build:
+    needs: check
+    permissions:
+      contents: read
+      pages: read
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -34,7 +41,7 @@ jobs:
           package-manager-cache: false
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -45,12 +52,20 @@ jobs:
           SITE_BASE: ${{ vars.SITE_BASE || '/local-ai-tools' }}
         run: pnpm build:marketplace
 
+      - name: Verify full marketplace routes
+        env:
+          SITE_BASE: ${{ vars.SITE_BASE || '/local-ai-tools' }}
+        run: pnpm verify:web
+
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
           path: apps/web/dist
 
   deploy:
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

@@ -3,11 +3,16 @@
   "version": "0.0.0",
   "private": true,
   "packageManager": "pnpm@10.15.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "build": "pnpm -r build",
+    "audit:dependencies": "pnpm audit --audit-level=low",
     "build:hub": "pnpm enrich:lmstudio && pnpm build",
     "build:marketplace": "pnpm enrich:lmstudio && pnpm discover:mcp && pnpm build",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm validate:catalog && pnpm build",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm validate:catalog && pnpm build && pnpm verify:web",
+    "verify:web": "tsx scripts/verify-web-build.ts",
     "dev": "pnpm --filter @local-ai-tools/web dev",
     "dev:hub": "pnpm enrich:lmstudio && pnpm dev",
     "dev:marketplace": "pnpm enrich:lmstudio && pnpm discover:mcp && pnpm dev",

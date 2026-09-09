@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_call:
   pull_request:
   push:
     branches:
@@ -12,6 +13,7 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -28,7 +30,10 @@ jobs:
           package-manager-cache: false
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependencies
+        run: pnpm audit:dependencies
 
       - name: Validate catalogue
         run: pnpm validate:catalog
@@ -58,7 +63,6 @@ jobs:
         run: pnpm build
 
       - name: Verify GitHub Pages routes
-        run: |
-          grep -q 'href="/local-ai-tools/tools/' apps/web/dist/index.html
-          ! grep -q '/local-ai-toolstools/' apps/web/dist/index.html
-          cmp apps/web/public/app-icon.png apps/web/dist/app-icon.png
+        env:
+          SITE_BASE: /local-ai-tools
+        run: pnpm verify:web

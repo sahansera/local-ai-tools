@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { fetchMcpRegistry } from "./discover-mcp-registry.ts";
+import { evaluateLmStudioCompatibility } from "../apps/web/src/lib/lmstudio-mcp.ts";
 
 test("fetchMcpRegistry follows cursors, requests latest versions, and removes deleted entries", async () => {
   const requested: string[] = [];
@@ -84,5 +85,74 @@ test("fetchMcpRegistry fails closed on malformed responses", async () => {
   await assert.rejects(
     () => fetchMcpRegistry(fetcher, "https://registry.example.test"),
     /servers array/,
+  );
+});
+
+test("ingested URL templates require setup before generating an install link", async () => {
+  for (const url of [
+    "https://example.com/mcp/{tenant}",
+    "https://example.com/mcp?tenant={tenant}",
+    "https://{tenant}.example.com/mcp",
+    "https://example.com/mcp/%7Btenant%7D",
+  ]) {
+    const fetcher = (async () =>
+      new Response(
+        JSON.stringify({
+          servers: [
+            {
+              server: {
+                name: "io.example/tenant",
+                description: "Tenant endpoint",
+                version: "1.0.0",
+                remotes: [
+                  {
+                    type: "streamable-http",
+                    url,
+                    variables: { tenant: { isRequired: true } },
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+      )) as typeof fetch;
+    const [entry] = await fetchMcpRegistry(fetcher);
+    const result = evaluateLmStudioCompatibility(entry.server);
+    assert.equal(result.status, "setup-required", url);
+    assert.deepEqual(result.requiredInputs, ["tenant"], url);
+    assert.equal(result.deeplink, undefined, url);
+  }
+});
+
+test("ingested default URL values resolve before installation", async () => {
+  const fetcher = (async () =>
+    new Response(
+      JSON.stringify({
+        servers: [
+          {
+            server: {
+              name: "io.example/tenant",
+              description: "Tenant endpoint",
+              version: "1.0.0",
+              remotes: [
+                {
+                  type: "streamable-http",
+                  url: "https://example.com/mcp/{tenant}",
+                  variables: { tenant: { default: "demo" } },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    )) as typeof fetch;
+  const [entry] = await fetchMcpRegistry(fetcher);
+  const result = evaluateLmStudioCompatibility(entry.server);
+  assert.equal(result.status, "ready");
+  assert.equal(result.config?.url, "https://example.com/mcp/demo");
+  const config = new URL(result.deeplink!).searchParams.get("config")!;
+  assert.equal(
+    JSON.parse(Buffer.from(config, "base64").toString()).url,
+    result.config?.url,
   );
 });
