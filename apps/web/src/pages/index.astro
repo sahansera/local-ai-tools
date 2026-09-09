@@ -1,13 +1,11 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ToolCard from '../components/ToolCard.astro';
+import CardActions from '../components/CardActions.astro';
 import {
   categories,
-  enrichedToolCount,
   lmStudioHubCount,
   lmStudioReadyMcpCount,
-  lmStudioSetupMcpCount,
-  lmStudioUnknownMcpCount,
   mcpRegistryCount,
   platforms,
   tools,
@@ -16,7 +14,7 @@ import {
 import { lmStudioStatus } from '../lib/lmstudio-install';
 import { withBase } from '../lib/site-path';
 
-const PAGE_SIZE = 48;
+const PAGE_SIZE = 24;
 
 function metadataQuality(tool: Tool): number {
   const knownRuntimeValues = [
@@ -72,11 +70,16 @@ const browseUrl = withBase('browse.json');
 <BaseLayout>
   <main>
     <section class="site-shell hero">
-      <div class="eyebrow">Open-source LM Studio discovery</div>
-      <h1>Find tools that work with LM Studio.</h1>
+      <div class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Your local AI, with more possibilities</div>
+      <h1>Small tools.<br /><span class="hero-highlight">Bigger possibilities.</span></h1>
       <p>
-        Discover native LM Studio plugins and MCP servers with transparent compatibility, runtime, platform, and setup information.
+        Give LM Studio a few new superpowers. Discover plugins and MCP servers for the things you want to make, find, and do.
       </p>
+      <div class="hero-stats" aria-label="Catalogue statistics">
+        <div><strong>{lmStudioHubCount.toLocaleString('en-US')}</strong><span>native plugins</span></div>
+        <div><strong>{mcpRegistryCount.toLocaleString('en-US')}</strong><span>MCP servers</span></div>
+        <div><strong>{lmStudioReadyMcpCount.toLocaleString('en-US')}</strong><span>MCPs ready to add</span></div>
+      </div>
     </section>
 
     <section
@@ -87,7 +90,10 @@ const browseUrl = withBase('browse.json');
       data-page-size={PAGE_SIZE}
     >
       <div class="filters">
-        <input class="search-input" id="tool-search" type="search" placeholder="Search video, files, coding…" aria-label="Search tools" />
+        <div class="search-field">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></svg>
+          <input class="search-input" id="tool-search" type="search" placeholder="What do you want to do?" aria-label="Search tools" />
+        </div>
 
         <select class="filter-select" id="type-filter" aria-label="Filter by type">
           <option value="">All types</option>
@@ -115,10 +121,8 @@ const browseUrl = withBase('browse.json');
 
       <div class="marketplace-meta">
         <div>
-          <strong id="tools-heading">Browse tools</strong>
-          <span class="source-summary">
-            {lmStudioHubCount} native plugins · {mcpRegistryCount} MCP Registry · {lmStudioReadyMcpCount} MCPs ready · {lmStudioSetupMcpCount} setup required · {lmStudioUnknownMcpCount} unknown · {enrichedToolCount} enriched
-          </span>
+          <strong id="tools-heading">Find your next tool</strong>
+          <span class="source-summary">Built for your local AI workflow.</span>
         </div>
         <div class="marketplace-actions">
           <span id="result-count">{defaultTools.length} {defaultTools.length === 1 ? 'tool' : 'tools'}</span>
@@ -132,9 +136,10 @@ const browseUrl = withBase('browse.json');
       </div>
 
       {(lmStudioHubCount > 0 || mcpRegistryCount > 0) && (
-        <div class="catalogue-note">
-          Native Hub plugins are directly installable in LM Studio. MCP Registry entries are converted to LM Studio configuration only when the Registry metadata is sufficient to do so deterministically. The default view shows LM Studio-ready tools; use the compatibility filter to inspect setup-required or unknown MCPs.
-        </div>
+        <details class="catalogue-note">
+          <summary>What does “Ready” mean?</summary>
+          <p>Native plugins can be added directly to LM Studio. For MCP servers, “Ready” means we can generate a configuration from the published metadata. It is not a security review. Check the tool and its permissions before adding it.</p>
+        </details>
       )}
 
       <div class="tool-grid" id="tool-grid">
@@ -152,10 +157,12 @@ const browseUrl = withBase('browse.json');
 
       <template id="tool-card-template">
         <article class="tool-card">
+          <div class="card-heading">
+            <span class="tool-monogram" data-role="monogram" aria-hidden="true"></span>
+            <div class="card-kind"><span data-role="type"></span><small data-role="source"></small></div>
+            <span class="badge compatibility-badge" data-role="compatibility"></span>
+          </div>
           <div class="card-topline" data-role="topline">
-            <span class="badge" data-role="type"></span>
-            <span class="badge source" data-role="source"></span>
-            <span class="badge" data-role="compatibility"></span>
           </div>
           <div>
             <h2><a data-role="title"></a></h2>
@@ -163,11 +170,9 @@ const browseUrl = withBase('browse.json');
           </div>
           <div class="badges" data-role="tags"></div>
           <div class="card-spacer"></div>
-          <div class="card-actions">
-            <a class="card-link" data-role="link">View details →</a>
-          </div>
           <div class="card-footer">
-            <span data-role="meta"></span>
+            <span class="card-meta"><span class="card-author" data-role="author"></span><small data-role="meta"></small></span>
+            <CardActions />
           </div>
         </article>
       </template>
@@ -222,19 +227,23 @@ const browseUrl = withBase('browse.json');
 
     const makeCard = (tool) => {
       const card = cardTemplate.content.firstElementChild.cloneNode(true);
+      card.dataset.type = tool.type;
+      card.querySelector('[data-role="monogram"]').textContent = tool.name.slice(0, 2).toUpperCase();
       const topline = card.querySelector('[data-role="topline"]');
       card.querySelector('[data-role="type"]').textContent =
         tool.type === 'lmstudio-plugin' ? 'LM Studio Plugin' : 'MCP Server';
       card.querySelector('[data-role="source"]').textContent = sourceLabel(tool.source.kind);
 
       const compatibilityBadge = card.querySelector('[data-role="compatibility"]');
-      compatibilityBadge.textContent = compatibilityLabel(tool.compatibility);
+      compatibilityBadge.textContent = tool.compatibility === 'ready' ? 'Ready' : compatibilityLabel(tool.compatibility);
       if (tool.compatibility === 'ready') compatibilityBadge.classList.add('good');
       if (tool.compatibility === 'setup-required') compatibilityBadge.classList.add('setup');
 
       if (tool.runtime.local === true) addBadge(topline, 'Fully local', 'good');
       if (tool.runtime.local === false) addBadge(topline, 'Remote');
       if (tool.runtime.apiKeyRequired === false) addBadge(topline, 'No API key', 'good');
+      if (tool.risks?.length) addBadge(topline, `⚠ ${tool.risks.length} risk signal${tool.risks.length === 1 ? '' : 's'}`, 'risk');
+      topline.hidden = topline.children.length === 0;
 
       const link = new URL(tool.href, document.baseURI).href;
       const title = card.querySelector('[data-role="title"]');
@@ -248,13 +257,23 @@ const browseUrl = withBase('browse.json');
       for (const tag of displayTags.slice(0, 4)) addBadge(tagContainer, tag);
       tagContainer.hidden = displayTags.length === 0;
 
-      const meta = [];
-      if (tool.version) meta.push(`v${tool.version}`);
-      if (typeof tool.source.downloads === 'number') meta.push(`${tool.source.downloads} downloads`);
-      meta.push(`by ${tool.author}`);
-      card.querySelector('[data-role="meta"]').textContent = meta.join(' · ');
+      card.querySelector('[data-role="author"]').textContent = `by ${tool.author}`;
+      card.querySelector('[data-role="meta"]').textContent = typeof tool.source.downloads === 'number'
+        ? `${tool.source.downloads.toLocaleString('en-US')} downloads`
+        : tool.version ? `v${tool.version}` : sourceLabel(tool.source.kind);
       const cardLink = card.querySelector('[data-role="link"]');
       cardLink.href = link;
+      cardLink.setAttribute('aria-label', `View details for ${tool.name}`);
+      const officialLink = card.querySelector('[data-role="official-link"]');
+      officialLink.setAttribute('aria-label', `Open official page for ${tool.name}`);
+      // Older cached browse indexes may not have homepage yet.
+      let officialUrl;
+      try { officialUrl = tool.homepage ? new URL(tool.homepage) : null; } catch { officialUrl = null; }
+      if (officialUrl && ['http:', 'https:'].includes(officialUrl.protocol)) {
+        officialLink.href = officialUrl.href;
+      } else {
+        officialLink.hidden = true;
+      }
 
       return card;
     };
@@ -402,10 +421,6 @@ const browseUrl = withBase('browse.json');
   </script>
 
   <style is:global>
-    .filters {
-      grid-template-columns: minmax(220px, 1fr) repeat(4, minmax(130px, 0.32fr));
-    }
-
     .catalogue-note {
       margin: 0.9rem 1.1rem 0;
       border: 1px solid rgb(125 211 252 / 16%);
@@ -425,48 +440,6 @@ const browseUrl = withBase('browse.json');
       width: auto;
       min-width: 165px;
       min-height: 2.4rem;
-    }
-
-    .badge.source {
-      color: var(--accent);
-      border-color: rgb(125 211 252 / 22%);
-      background: rgb(125 211 252 / 5%);
-    }
-
-    .badge.setup {
-      color: #f5d58a;
-      border-color: rgb(251 191 36 / 24%);
-      background: rgb(251 191 36 / 6%);
-    }
-
-    .tool-card {
-      min-height: 260px;
-    }
-
-    .tool-card h2 {
-      line-height: 1.2;
-    }
-
-    .tool-card h2 a:hover {
-      color: var(--accent);
-    }
-
-    .tool-card p {
-      display: -webkit-box;
-      overflow: hidden;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 4;
-    }
-
-    .card-actions {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 0.75rem;
-    }
-
-    .card-footer {
-      justify-content: flex-start;
     }
 
     .load-more-row {

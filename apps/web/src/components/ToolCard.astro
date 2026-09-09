@@ -6,6 +6,7 @@ import {
   lmStudioStatusReason,
 } from '../lib/lmstudio-install';
 import { withBase } from '../lib/site-path';
+import CardActions from './CardActions.astro';
 
 interface Props {
   tool: Tool;
@@ -68,12 +69,12 @@ const displayTags = visibleCategories.length > 0 ? visibleCategories : tool.type
   data-updated-at={tool.source.updatedAt ?? ''}
   data-metadata-quality={metadataQuality}
 >
-  <div class="card-topline">
-    <span class="badge">{tool.type === 'lmstudio-plugin' ? 'LM Studio Plugin' : 'MCP Server'}</span>
-    <span class="badge source">{sourceLabel}</span>
-    <span class:list={['badge', compatibility === 'ready' && 'good', compatibility === 'setup-required' && 'setup']}>
-      {compatibilityLabel}
-    </span>
+  <div class="card-heading">
+    <span class="tool-monogram" aria-hidden="true">{tool.name.slice(0, 2).toUpperCase()}</span>
+    <div class="card-kind"><span>{tool.type === 'lmstudio-plugin' ? 'LM Studio Plugin' : 'MCP Server'}</span><small>{sourceLabel}</small></div>
+    <span class:list={['badge', 'compatibility-badge', compatibility === 'ready' && 'good', compatibility === 'setup-required' && 'setup']} title={compatibilityReason}>{compatibility === 'ready' ? 'Ready' : compatibilityLabel}</span>
+  </div>
+  <div class="card-topline" hidden={tool.runtime.local === 'unknown' && tool.runtime.apiKeyRequired !== false && !(tool.risks?.length)}>
     {tool.runtime.local === true && <span class="badge good">Fully local</span>}
     {tool.runtime.local === false && <span class="badge">Remote</span>}
     {tool.runtime.apiKeyRequired === false && <span class="badge good">No API key</span>}
@@ -93,68 +94,11 @@ const displayTags = visibleCategories.length > 0 ? visibleCategories : tool.type
 
   <div class="card-spacer"></div>
 
-  <div class="card-actions">
-    <a class="card-link" href={toolHref}>View details →</a>
-  </div>
-
   <div class="card-footer">
-    <span>
-      {tool.setup?.version ? `v${tool.setup.version} · ` : ''}
-      {typeof tool.source.downloads === 'number'
-        ? `${tool.source.downloads} downloads · `
-        : ''}
-      by {tool.author.handle ?? tool.author.name}
+    <span class="card-meta">
+      <span class="card-author">by {tool.author.handle ?? tool.author.name}</span>
+      <small>{typeof tool.source.downloads === 'number' ? `${tool.source.downloads.toLocaleString('en-US')} downloads` : tool.setup?.version ? `v${tool.setup.version}` : sourceLabel}</small>
     </span>
+    <CardActions name={tool.name} detailsHref={toolHref} officialHref={tool.links.homepage} />
   </div>
 </article>
-
-<style>
-  .tool-card {
-    min-height: 260px;
-    transition:
-      transform 160ms ease,
-      border-color 160ms ease,
-      background 160ms ease,
-      box-shadow 160ms ease;
-  }
-
-  .tool-card:hover {
-    box-shadow: 0 14px 36px rgb(0 0 0 / 22%);
-  }
-
-  .badge.source {
-    color: var(--accent);
-    border-color: rgb(125 211 252 / 22%);
-    background: rgb(125 211 252 / 5%);
-  }
-
-  .badge.setup {
-    color: #f5d58a;
-    border-color: rgb(251 191 36 / 24%);
-    background: rgb(251 191 36 / 6%);
-  }
-
-  .tool-card h2 {
-    line-height: 1.2;
-  }
-
-  .tool-card h2 a:hover {
-    color: var(--accent);
-  }
-
-  .tool-card p {
-    display: -webkit-box;
-    overflow: hidden;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 4;
-  }
-
-  .card-actions {
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  .card-footer {
-    justify-content: flex-start;
-  }
-</style>
