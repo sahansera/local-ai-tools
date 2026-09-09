@@ -77,8 +77,8 @@ const browseUrl = withBase('browse.json');
       </p>
       <div class="hero-stats" aria-label="Catalogue statistics">
         <div><strong>{lmStudioHubCount.toLocaleString('en-US')}</strong><span>native plugins</span></div>
-        <div><strong>{mcpRegistryCount.toLocaleString('en-US')}</strong><span>MCP servers</span></div>
-        <div><strong>{lmStudioReadyMcpCount.toLocaleString('en-US')}</strong><span>MCPs ready to add</span></div>
+        <div><strong>{mcpRegistryCount.toLocaleString('en-US')}</strong><span class="stat-help" tabindex="0" aria-describedby="mcp-listed-help">MCPs listed<span class="stat-tooltip" role="tooltip" id="mcp-listed-help">MCP server listings imported from the MCP Registry.</span></span></div>
+        <div><strong>{lmStudioReadyMcpCount.toLocaleString('en-US')}</strong><span class="stat-help" tabindex="0" aria-describedby="mcp-ready-help">Ready for LM Studio<span class="stat-tooltip" role="tooltip" id="mcp-ready-help">MCPs with enough published metadata to generate an install configuration. Compatibility has not been individually tested.</span></span></div>
       </div>
     </section>
 

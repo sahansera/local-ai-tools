@@ -203,6 +203,45 @@ select {
   padding-left: 2.75rem;
 }
 
+.stat-help {
+  position: relative;
+  cursor: help;
+  text-decoration: underline dotted;
+  text-underline-offset: 4px;
+}
+.stat-help:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+.hero-stats .stat-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 210px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #46516a;
+  border-radius: 0.5rem;
+  background: #20283a;
+  color: var(--text);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  font-weight: 400;
+  text-decoration: none;
+  visibility: hidden;
+  z-index: 3;
+}
+.hero-stats > div:last-child .stat-tooltip {
+  right: 0;
+  left: auto;
+  transform: none;
+}
+.stat-help:hover .stat-tooltip,
+.stat-help:focus .stat-tooltip {
+  visibility: visible;
+}
+
 .hero p {
   max-width: 670px;
   margin: 1.4rem auto 0;
