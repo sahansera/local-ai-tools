@@ -22,8 +22,14 @@ const baseTool = {
 };
 
 test("safeWebUrl only allows HTTP and HTTPS", () => {
-  assert.equal(safeWebUrl("https://example.com/path"), "https://example.com/path");
-  assert.equal(safeWebUrl("http://localhost:3000"), "http://localhost:3000/");
+  assert.equal(
+    safeWebUrl("https://example.com/path"),
+    "https://example.com/path",
+  );
+  assert.equal(
+    safeWebUrl("http://localhost:3000"),
+    "http://localhost:3000/",
+  );
   assert.equal(safeWebUrl("javascript:alert(1)"), undefined);
   assert.equal(safeWebUrl("file:///tmp/example"), undefined);
   assert.equal(safeWebUrl("not a url"), undefined);
