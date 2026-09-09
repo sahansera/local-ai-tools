@@ -61,3 +61,4 @@ jobs:
         run: |
           grep -q 'href="/local-ai-tools/tools/' apps/web/dist/index.html
           ! grep -q '/local-ai-toolstools/' apps/web/dist/index.html
+          cmp apps/web/public/app-icon.png apps/web/dist/app-icon.png
