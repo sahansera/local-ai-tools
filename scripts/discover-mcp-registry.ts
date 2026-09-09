@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
+import { safeWebUrl } from "./web-url.ts";
 
 export interface McpRegistryPackage {
   registryType: string;
@@ -66,6 +67,28 @@ export interface McpRegistrySnapshot {
 const DEFAULT_BASE_URL = "https://registry.modelcontextprotocol.io";
 const PAGE_LIMIT = 100;
 
+function sanitizeEntry(
+  entry: McpRegistryServerResponse,
+): McpRegistryServerResponse {
+  const repositoryUrl = safeWebUrl(entry.server.repository?.url);
+  const remotes = entry.server.remotes?.map((remote) => ({
+    ...remote,
+    url: safeWebUrl(remote.url),
+  }));
+
+  return {
+    ...entry,
+    server: {
+      ...entry.server,
+      websiteUrl: safeWebUrl(entry.server.websiteUrl),
+      repository: entry.server.repository
+        ? { ...entry.server.repository, url: repositoryUrl }
+        : undefined,
+      remotes,
+    },
+  };
+}
+
 export async function fetchMcpRegistry(
   fetcher: typeof fetch = fetch,
   baseUrl = DEFAULT_BASE_URL,
@@ -97,7 +120,7 @@ export async function fetchMcpRegistry(
       throw new Error("MCP Registry response did not contain a servers array");
     }
 
-    servers.push(...payload.servers);
+    servers.push(...payload.servers.map(sanitizeEntry));
     cursor = payload.metadata?.nextCursor || undefined;
   } while (cursor);
 

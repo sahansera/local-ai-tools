@@ -3,6 +3,14 @@ import { z } from "zod";
 export const toolTypeSchema = z.enum(["lmstudio-plugin", "mcp"]);
 export const platformSchema = z.enum(["macos", "windows", "linux"]);
 
+const webUrlSchema = z.url().refine(
+  (value) => {
+    const protocol = new URL(value).protocol;
+    return protocol === "https:" || protocol === "http:";
+  },
+  { message: "URL must use HTTP or HTTPS" },
+);
+
 export const toolSchema = z.object({
   schemaVersion: z.literal(1),
   id: z.string().min(1),
@@ -16,8 +24,8 @@ export const toolSchema = z.object({
   categories: z.array(z.string().min(1)).min(1),
   tags: z.array(z.string().min(1)).default([]),
   links: z.object({
-    homepage: z.url(),
-    repository: z.url().optional(),
+    homepage: webUrlSchema,
+    repository: webUrlSchema.optional(),
   }),
   runtime: z.object({
     local: z.boolean(),
