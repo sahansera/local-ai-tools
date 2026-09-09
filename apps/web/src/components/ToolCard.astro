@@ -1,6 +1,7 @@
 ---
 import { toolSlug, type Tool } from '../lib/catalog';
 import {
+  lmStudioInstallUrl,
   lmStudioStatus,
   lmStudioStatusLabel,
   lmStudioStatusReason,
@@ -99,6 +100,6 @@ const displayTags = visibleCategories.length > 0 ? visibleCategories : tool.type
       <span class="card-author">by {tool.author.handle ?? tool.author.name}</span>
       <small>{typeof tool.source.downloads === 'number' ? `${tool.source.downloads.toLocaleString('en-US')} downloads` : tool.setup?.version ? `v${tool.setup.version}` : sourceLabel}</small>
     </span>
-    <CardActions name={tool.name} detailsHref={toolHref} officialHref={tool.links.homepage} />
+    <CardActions name={tool.name} detailsHref={toolHref} installHref={lmStudioInstallUrl(tool)} setupRequired={compatibility === 'setup-required'} />
   </div>
 </article>

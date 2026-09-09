@@ -2,14 +2,16 @@
 interface Props {
   name?: string;
   detailsHref?: string;
-  officialHref?: string;
+  installHref?: string;
+  setupRequired?: boolean;
 }
-const { name = 'tool', detailsHref, officialHref } = Astro.props;
+const { name = 'tool', detailsHref, installHref, setupRequired = false } = Astro.props;
+const installLabel = !installHref ? 'Use details for setup' : setupRequired ? 'Add to LM Studio (setup required)' : 'Add to LM Studio';
 ---
 
 <div class="card-actions">
-  <a class="card-icon-link" data-role="official-link" href={officialHref} aria-label={`Open official page for ${name}`} title="Official page" data-tooltip="Official page">
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 4h6v6M20 4l-9 9M10 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-4" /></svg>
+  <a class="card-icon-link card-install-link" data-role="install-link" href={installHref} role="link" tabindex="0" aria-disabled={!installHref ? "true" : undefined} aria-label={`${installLabel}: ${name}`} title={installLabel} data-tooltip={installLabel}>
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>
   </a>
   <a class="card-icon-link card-icon-link-primary" data-role="link" href={detailsHref} aria-label={`View details for ${name}`} title="View details" data-tooltip="View details">
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>

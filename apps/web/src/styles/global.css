@@ -482,6 +482,22 @@ select {
 .card-icon-link-primary:hover {
   background: #8060d1;
 }
+.card-install-link:not([aria-disabled="true"]) {
+  border-color: rgb(108 221 182 / 38%);
+  color: #6cddb6;
+  background: rgb(108 221 182 / 7%);
+}
+.card-install-link:not([aria-disabled="true"]):hover {
+  background: rgb(108 221 182 / 18%);
+  color: #c4ffe9;
+}
+.card-icon-link[aria-disabled="true"] {
+  color: #748096;
+  border-color: #2b3446;
+  background: transparent;
+  cursor: not-allowed;
+  transform: none;
+}
 .card-icon-link::after {
   content: attr(data-tooltip);
   position: absolute;
@@ -494,7 +510,10 @@ select {
   background: #20283a;
   color: #edf1ff;
   font-size: 0.7rem;
-  white-space: nowrap;
+  width: max-content;
+  max-width: 190px;
+  white-space: normal;
+  text-align: center;
   opacity: 0;
   transform: translateY(3px);
   transition:

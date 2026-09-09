@@ -13,7 +13,6 @@ export const GET: APIRoute = () => {
     tags: tool.tags.filter((tag) => !tag.startsWith("lm-studio-")),
     platforms: tool.platforms,
     runtime: tool.runtime,
-    homepage: tool.links.homepage,
     risks: tool.risks ?? [],
     source: {
       kind: tool.source.kind,

@@ -264,15 +264,20 @@ const browseUrl = withBase('browse.json');
       const cardLink = card.querySelector('[data-role="link"]');
       cardLink.href = link;
       cardLink.setAttribute('aria-label', `View details for ${tool.name}`);
-      const officialLink = card.querySelector('[data-role="official-link"]');
-      officialLink.setAttribute('aria-label', `Open official page for ${tool.name}`);
-      // Older cached browse indexes may not have homepage yet.
-      let officialUrl;
-      try { officialUrl = tool.homepage ? new URL(tool.homepage) : null; } catch { officialUrl = null; }
-      if (officialUrl && ['http:', 'https:'].includes(officialUrl.protocol)) {
-        officialLink.href = officialUrl.href;
+      const installLink = card.querySelector('[data-role="install-link"]');
+      const installUrl = tool.installUrl?.startsWith('lmstudio://') ? tool.installUrl : null;
+      const installLabel = !installUrl ? 'Use details for setup'
+        : tool.compatibility === 'setup-required' ? 'Add to LM Studio (setup required)'
+        : 'Add to LM Studio';
+      installLink.setAttribute('aria-label', `${installLabel}: ${tool.name}`);
+      installLink.title = installLabel;
+      installLink.dataset.tooltip = installLabel;
+      if (installUrl) {
+        installLink.href = installUrl;
+        installLink.removeAttribute('aria-disabled');
       } else {
-        officialLink.hidden = true;
+        installLink.removeAttribute('href');
+        installLink.setAttribute('aria-disabled', 'true');
       }
 
       return card;
