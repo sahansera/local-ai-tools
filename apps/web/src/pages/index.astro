@@ -13,10 +13,7 @@ import {
   tools,
   type Tool,
 } from '../lib/catalog';
-import {
-  lmStudioInstallUrl,
-  lmStudioStatus,
-} from '../lib/lmstudio-install';
+import { lmStudioStatus } from '../lib/lmstudio-install';
 import { withBase } from '../lib/site-path';
 
 const PAGE_SIZE = 48;
@@ -167,7 +164,6 @@ const browseUrl = withBase('browse.json');
           <div class="badges" data-role="tags"></div>
           <div class="card-spacer"></div>
           <div class="card-actions">
-            <a class="install-button" data-role="install">Add to LM Studio</a>
             <a class="card-link" data-role="link">View details →</a>
           </div>
           <div class="card-footer">
@@ -251,19 +247,6 @@ const browseUrl = withBase('browse.json');
       const displayTags = visibleCategories.length > 0 ? visibleCategories : tool.type === 'mcp' ? tool.tags : [];
       for (const tag of displayTags.slice(0, 4)) addBadge(tagContainer, tag);
       tagContainer.hidden = displayTags.length === 0;
-
-      const install = card.querySelector('[data-role="install"]');
-      if (tool.installUrl) {
-        install.href = tool.installUrl;
-        install.removeAttribute('aria-disabled');
-        install.classList.remove('disabled');
-        install.title = 'Open LM Studio and add this tool';
-      } else {
-        install.removeAttribute('href');
-        install.setAttribute('aria-disabled', 'true');
-        install.classList.add('disabled');
-        install.title = 'Open details to review LM Studio setup requirements';
-      }
 
       const meta = [];
       if (tool.version) meta.push(`v${tool.version}`);
@@ -478,34 +461,8 @@ const browseUrl = withBase('browse.json');
     .card-actions {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       gap: 0.75rem;
-    }
-
-    .install-button {
-      display: inline-flex;
-      min-height: 2.25rem;
-      align-items: center;
-      justify-content: center;
-      border-radius: 0.65rem;
-      padding: 0 0.8rem;
-      background: var(--text);
-      color: var(--bg);
-      font-size: 0.78rem;
-      font-weight: 800;
-      text-decoration: none;
-    }
-
-    .install-button:hover:not(.disabled) {
-      background: white;
-    }
-
-    .install-button.disabled {
-      border: 1px solid var(--border);
-      background: #09101a;
-      color: var(--muted);
-      cursor: not-allowed;
-      opacity: 0.62;
     }
 
     .card-footer {
@@ -550,11 +507,6 @@ const browseUrl = withBase('browse.json');
         width: 100%;
         align-items: center;
         justify-content: space-between;
-      }
-
-      .card-actions {
-        align-items: stretch;
-        flex-direction: column;
       }
 
       .load-more-row {
