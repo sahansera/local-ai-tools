@@ -40,10 +40,7 @@ jobs:
         run: node -e "const fs=require('node:fs'); const bytes=fs.readFileSync('apps/web/public/app-icon.png'); const png=Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]); if (!bytes.subarray(0,8).equals(png)) throw new Error('apps/web/public/app-icon.png is not a valid PNG');"
 
       - name: Format check
-        run: |
-          pnpm exec prettier README.md --write
-          git diff -- README.md
-          exit 1
+        run: pnpm format:check
 
       - name: Lint
         run: pnpm lint
