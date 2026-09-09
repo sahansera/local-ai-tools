@@ -4,7 +4,9 @@
 
 Please do not open a public issue for a suspected security vulnerability.
 
-If GitHub's **Report a vulnerability** option is available for this repository, please use it so the report is handled privately. Otherwise, contact the maintainer (`@sahansera`) privately through GitHub and avoid sharing exploit details in a public issue or discussion.
+Use [GitHub's private vulnerability reporting form](https://github.com/sahansera/local-ai-tools/security/advisories/new) to send a report to the maintainer. Do not put vulnerability details in public issues or discussions.
+
+If the private form is unavailable, [request a private reporting channel](https://github.com/sahansera/local-ai-tools/issues/new?title=Request%20a%20private%20security%20contact) with only that request. Do not include the affected component, reproduction steps, exploit details, or personal information. Wait for the maintainer to arrange a private channel before sending the report.
 
 When reporting, include:
 

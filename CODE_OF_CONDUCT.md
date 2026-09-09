@@ -16,6 +16,6 @@ Unacceptable behavior includes harassment, trolling, insulting or derogatory com
 
 Project maintainers are responsible for clarifying and enforcing these standards and may remove, edit, or reject contributions, comments, commits, code, issues, or other contributions that do not align with this Code of Conduct.
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported privately to the project maintainer. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported privately to the project maintainer. If you do not already have a private contact, [request a private Code of Conduct reporting channel](https://github.com/sahansera/local-ai-tools/issues/new?title=Request%20a%20private%20Code%20of%20Conduct%20contact). Include only the contact request, without names, incident details, or other personal information; wait for a private channel before sending your report. All complaints will be reviewed and investigated promptly and fairly.
 
 This Code of Conduct is adapted from the Contributor Covenant, version 2.1: https://www.contributor-covenant.org/version/2/1/code_of_conduct.html

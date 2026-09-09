@@ -34,6 +34,7 @@ dist/
 out/
 
 # Discovery snapshots
+generated/catalog.json
 generated/lmstudio-discovery.json
 generated/lmstudio-enriched.json
 generated/mcp-registry.json

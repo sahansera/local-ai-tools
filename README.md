@@ -100,7 +100,7 @@ External tools remain in their own repositories and retain their own licenses, r
 
 ### Requirements
 
-- Node.js 22+
+- Node.js 22.12+ (or a newer supported LTS release)
 - pnpm 10+
 
 ### Start with fresh marketplace data
@@ -128,6 +128,7 @@ pnpm enrich:lmstudio       # enrich plugin capability/runtime metadata
 pnpm discover:mcp          # refresh the official MCP Registry snapshot
 pnpm generate:catalog      # generate contributor-authored catalogue data
 pnpm check                 # format, lint, typecheck, test, validate, build
+pnpm audit:dependencies    # check the locked dependency graph for advisories
 pnpm build:marketplace     # production-style build with fresh upstream data
 ```
 
@@ -202,6 +203,10 @@ Ingestion preserves factual upstream information such as version, package regist
 GitHub Pages deployment is handled by `.github/workflows/deploy-pages.yml`.
 
 Production deployment refreshes LM Studio Hub discovery/enrichment and MCP Registry data, builds Astro + Pagefind, and publishes `apps/web/dist` through GitHub Pages.
+
+Deployment is limited to `main` and waits for the reusable CI checks on the same commit, including the dependency audit. CI and deployment both install from the committed lockfile. When updating dependencies, regenerate and commit `pnpm-lock.yaml` with the manifest changes.
+
+Detail URLs include a stable suffix derived from the exact upstream identifier so case and punctuation differences cannot silently select another listing. Unambiguous older URLs redirect to the new page; previously colliding URLs are not redirected to an arbitrary tool.
 
 The current site is hosted at:
 

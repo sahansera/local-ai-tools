@@ -12,11 +12,14 @@ Thanks for helping improve Local AI Tools.
 
 ## Local development
 
+Use Node.js 22.12+ and the pnpm version specified in `package.json`.
+
 ```bash
-pnpm install
+pnpm install --frozen-lockfile
 pnpm validate:catalog
 pnpm generate:catalog
 pnpm check
+pnpm audit:dependencies
 ```
 
 ## Adding a tool
@@ -31,6 +34,7 @@ Keep contributor-authored metadata factual and minimal. Generated metadata such 
 - Explain the problem and the chosen approach.
 - Add or update tests when behavior changes.
 - Ensure `pnpm check` passes.
+- Commit the updated `pnpm-lock.yaml` whenever dependencies change, and ensure `pnpm audit:dependencies` passes.
 - Use clear commit messages. Squash merging is preferred.
 
 ## Listed projects stay independent

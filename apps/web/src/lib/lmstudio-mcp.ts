@@ -1,3 +1,5 @@
+import { safeWebUrl, safeWebUrlTemplate } from "../../../../scripts/web-url";
+
 export type LmStudioCompatibilityStatus =
   "ready" | "setup-required" | "unknown";
 
@@ -301,7 +303,27 @@ function fromRemote(
   }
 
   const remote = remotes[0];
-  const url = resolveTemplate(remote.url as string, remote.variables);
+  const template = safeWebUrlTemplate(remote.url);
+  if (!template) {
+    return {
+      status: "unknown",
+      installName: name,
+      reason: "The Registry endpoint must be a valid HTTP or HTTPS URL.",
+      requirements: [],
+      requiredInputs: [],
+    };
+  }
+  const url = resolveTemplate(template, remote.variables);
+  if (url.requiredInputs.length === 0 && !safeWebUrl(url.value)) {
+    return {
+      status: "unknown",
+      installName: name,
+      reason:
+        "The resolved Registry endpoint is not a valid HTTP or HTTPS URL.",
+      requirements: [],
+      requiredInputs: [],
+    };
+  }
   const headers = resolveValues(remote.headers, "HEADER");
   const requiredInputs = [...url.requiredInputs, ...headers.requiredInputs];
   const config: LmStudioServerConfig = { url: url.value };

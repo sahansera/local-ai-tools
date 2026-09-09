@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import { safeWebUrl } from "./web-url.ts";
+import { safeWebUrl, safeWebUrlTemplate } from "./web-url.ts";
 
 export interface McpRegistryPackage {
   registryType: string;
@@ -73,7 +73,7 @@ function sanitizeEntry(
   const repositoryUrl = safeWebUrl(entry.server.repository?.url);
   const remotes = entry.server.remotes?.map((remote) => ({
     ...remote,
-    url: safeWebUrl(remote.url),
+    url: safeWebUrlTemplate(remote.url),
   }));
 
   return {

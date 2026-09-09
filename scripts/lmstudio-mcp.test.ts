@@ -7,6 +7,24 @@ import {
 } from "../apps/web/src/lib/lmstudio-install.ts";
 import { evaluateLmStudioCompatibility } from "../apps/web/src/lib/lmstudio-mcp.ts";
 
+test("rejects non-web and invalid resolved remote endpoints", () => {
+  for (const remote of [
+    { type: "streamable-http", url: "javascript:alert(1)" },
+    {
+      type: "streamable-http",
+      url: "https://{tenant}.example.com/mcp",
+      variables: { tenant: { default: "invalid host" } },
+    },
+  ]) {
+    const result = evaluateLmStudioCompatibility({
+      name: "io.example/invalid",
+      remotes: [remote],
+    });
+    assert.equal(result.status, "unknown");
+    assert.equal(result.deeplink, undefined);
+  }
+});
+
 test("marks a single streamable HTTP remote as LM Studio ready", () => {
   const result = evaluateLmStudioCompatibility({
     name: "io.example/search",

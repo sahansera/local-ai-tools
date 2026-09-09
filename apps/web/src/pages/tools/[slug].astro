@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { tools, toolSlug, type RuntimeValue, type Tool } from '../../lib/catalog';
+import { toolRoutes, type RuntimeValue, type Tool } from '../../lib/catalog';
+import { withBase } from '../../lib/site-path';
 import {
   lmStudioInstallUrl,
   lmStudioStatus,
@@ -9,14 +10,20 @@ import {
 } from '../../lib/lmstudio-install';
 
 export function getStaticPaths() {
-  return tools.map((tool) => ({ params: { slug: toolSlug(tool) }, props: { tool } }));
+  return [
+    ...[...toolRoutes.canonical].map(([slug, tool]) => ({ params: { slug }, props: { tool } })),
+    ...[...toolRoutes.redirects].map(([slug, redirect]) => ({ params: { slug }, props: { redirect } })),
+  ];
 }
 
 interface Props {
-  tool: Tool;
+  tool?: Tool;
+  redirect?: string;
 }
 
-const { tool } = Astro.props;
+const { tool, redirect } = Astro.props;
+if (redirect) return Astro.redirect(withBase(`tools/${redirect}/`), 301);
+if (!tool) throw new Error('Missing tool for detail route');
 const typeLabel = tool.type === 'lmstudio-plugin' ? 'LM Studio Plugin' : 'MCP Server';
 const sourceLabel =
   tool.source.kind === 'lmstudio-hub'

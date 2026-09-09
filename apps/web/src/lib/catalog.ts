@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import catalogData from "../../../../generated/catalog.json";
+import { createToolRoutes } from "./tool-routes";
+export { toolSlug } from "./tool-routes";
 import {
   evaluateLmStudioCompatibility,
   type LmStudioCompatibility,
@@ -145,15 +148,20 @@ interface McpRegistrySnapshot {
   servers?: McpRegistryServerResponse[];
 }
 
-const hubDiscoveryPath = fileURLToPath(
-  new URL("../../../../generated/lmstudio-discovery.json", import.meta.url),
+// Astro bundles this module before prerendering, so import.meta.url no longer
+// points at the source tree. The config fixes the build root; CLI checks use
+// the source-relative fallback when running this module directly.
+declare const __CATALOG_ROOT__: string;
+const repoRoot =
+  typeof __CATALOG_ROOT__ === "string"
+    ? __CATALOG_ROOT__
+    : fileURLToPath(new URL("../../../../", import.meta.url));
+const hubDiscoveryPath = path.join(
+  repoRoot,
+  "generated/lmstudio-discovery.json",
 );
-const hubEnrichedPath = fileURLToPath(
-  new URL("../../../../generated/lmstudio-enriched.json", import.meta.url),
-);
-const mcpRegistryPath = fileURLToPath(
-  new URL("../../../../generated/mcp-registry.json", import.meta.url),
-);
+const hubEnrichedPath = path.join(repoRoot, "generated/lmstudio-enriched.json");
+const mcpRegistryPath = path.join(repoRoot, "generated/mcp-registry.json");
 
 function loadSnapshot<T>(path: string): T | null {
   try {
@@ -413,14 +421,10 @@ export const enrichedToolCount = tools.filter((tool) =>
   Boolean(tool.source.inferred),
 ).length;
 
-export function toolSlug(tool: Tool): string {
-  const slashless = tool.id.replaceAll("/", "-");
-  const normalized = slashless.replaceAll(/[^a-zA-Z0-9-]/g, "-");
-  return normalized.toLowerCase();
-}
+export const toolRoutes = createToolRoutes(tools);
 
 export function getToolBySlug(slug: string): Tool | undefined {
-  return tools.find((tool) => toolSlug(tool) === slug);
+  return toolRoutes.canonical.get(slug);
 }
 
 const categoryValues = tools.flatMap((tool) => tool.categories);
