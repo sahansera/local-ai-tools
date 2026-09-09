@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { safeWebUrl } from "./web-url.ts";
 
 const HUB_ARTIFACTS_URL = "https://lmstudio.ai/api/v1/artifacts";
 const DEFAULT_OUTPUT = "generated/lmstudio-discovery.json";
@@ -64,8 +65,6 @@ function rankPlugin(artifact: HubArtifact): number {
   const discussions = numeric(artifact.discussionCount);
   const staffPickBonus = artifact.staffPickedAt ? 50 : 0;
 
-  // Discovery ranking only. It is deliberately simple and transparent so we can
-  // inspect whether Hub engagement signals are useful before productizing them.
   return Math.round(
     Math.log10(downloads + 1) * 25 +
       Math.log10(likes + 1) * 35 +
@@ -77,16 +76,18 @@ function rankPlugin(artifact: HubArtifact): number {
 
 function normalizePlugin(artifact: HubArtifact): DiscoveryPlugin {
   const family = artifact.forkedFromArtifactIdentifier || artifact.identifier;
+  const fallbackHubUrl = `https://lmstudio.ai/${artifact.identifier}`;
+  const hubUrl =
+    safeWebUrl(artifact.current?.artifactUrl) ??
+    safeWebUrl(artifact.url) ??
+    fallbackHubUrl;
 
   return {
     identifier: artifact.identifier,
     owner: artifact.owner,
     name: artifact.name,
     description: artifact.description?.trim() || "",
-    hubUrl:
-      artifact.current?.artifactUrl ||
-      artifact.url ||
-      `https://lmstudio.ai/${artifact.identifier}`,
+    hubUrl,
     updatedAt: artifact.updatedAt || null,
     createdAt: artifact.createdAt || null,
     downloads: numeric(artifact.downloadCount),
