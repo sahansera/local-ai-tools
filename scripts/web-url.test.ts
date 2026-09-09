@@ -22,44 +22,37 @@ const baseTool = {
 };
 
 test("safeWebUrl only allows HTTP and HTTPS", () => {
-  assert.equal(
-    safeWebUrl("https://example.com/path"),
-    "https://example.com/path",
-  );
-  assert.equal(
-    safeWebUrl("http://localhost:3000"),
-    "http://localhost:3000/",
-  );
-  assert.equal(safeWebUrl("javascript:alert(1)"), undefined);
-  assert.equal(safeWebUrl("file:///tmp/example"), undefined);
-  assert.equal(safeWebUrl("not a url"), undefined);
+  const cases = [
+    ["https://example.com/path", "https://example.com/path"],
+    ["http://localhost:3000", "http://localhost:3000/"],
+    ["javascript:alert(1)", undefined],
+    ["file:///tmp/example", undefined],
+    ["not a url", undefined],
+  ] as const;
+
+  for (const [input, expected] of cases) {
+    assert.equal(safeWebUrl(input), expected);
+  }
 });
 
 test("catalogue schema rejects non-web link schemes", () => {
-  assert.equal(
-    toolSchema.safeParse({
-      ...baseTool,
-      links: { homepage: "https://example.com" },
-    }).success,
-    true,
-  );
+  const valid = toolSchema.safeParse({
+    ...baseTool,
+    links: { homepage: "https://example.com" },
+  });
+  const scriptUrl = toolSchema.safeParse({
+    ...baseTool,
+    links: { homepage: "javascript:alert(1)" },
+  });
+  const fileUrl = toolSchema.safeParse({
+    ...baseTool,
+    links: {
+      homepage: "https://example.com",
+      repository: "file:///tmp/repo",
+    },
+  });
 
-  assert.equal(
-    toolSchema.safeParse({
-      ...baseTool,
-      links: { homepage: "javascript:alert(1)" },
-    }).success,
-    false,
-  );
-
-  assert.equal(
-    toolSchema.safeParse({
-      ...baseTool,
-      links: {
-        homepage: "https://example.com",
-        repository: "file:///tmp/repo",
-      },
-    }).success,
-    false,
-  );
+  assert.equal(valid.success, true);
+  assert.equal(scriptUrl.success, false);
+  assert.equal(fileUrl.success, false);
 });
