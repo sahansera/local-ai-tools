@@ -33,15 +33,15 @@ Local AI Tools brings those ecosystems together into a single searchable catalog
 
 ### At a glance
 
-| | |
-| --- | --- |
-| **Native LM Studio plugins** | Discover public plugins from the LM Studio Hub and jump straight into LM Studio. |
-| **MCP servers** | Discover servers from the official MCP Registry and see whether their published metadata maps safely to an LM Studio configuration. |
-| **LM Studio compatibility** | Listings are classified as **Ready**, **Setup required**, or **Compatibility unknown**. |
-| **One-click installation** | Generates **Add to LM Studio** links when a deterministic configuration can be produced safely. |
-| **Useful signals** | Search by capability and inspect local/remote execution, API-key requirements, package/transport metadata, risk signals, source, and more. |
-| **Provenance-first** | Upstream presence determines discoverability. Local AI Tools enriches and explains listings rather than maintaining a private allowlist. |
-| **Static by default** | The marketplace is built with Astro + Pagefind and deployed as static files — no account or application backend required. |
+|                              |                                                                                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Native LM Studio plugins** | Discover public plugins from the LM Studio Hub and jump straight into LM Studio.                                                           |
+| **MCP servers**              | Discover servers from the official MCP Registry and see whether their published metadata maps safely to an LM Studio configuration.        |
+| **LM Studio compatibility**  | Listings are classified as **Ready**, **Setup required**, or **Compatibility unknown**.                                                    |
+| **One-click installation**   | Generates **Add to LM Studio** links when a deterministic configuration can be produced safely.                                            |
+| **Useful signals**           | Search by capability and inspect local/remote execution, API-key requirements, package/transport metadata, risk signals, source, and more. |
+| **Provenance-first**         | Upstream presence determines discoverability. Local AI Tools enriches and explains listings rather than maintaining a private allowlist.   |
+| **Static by default**        | The marketplace is built with Astro + Pagefind and deployed as static files — no account or application backend required.                  |
 
 ## Why this exists
 
@@ -60,11 +60,11 @@ Local AI Tools is designed to make **capability discovery** the starting point r
 
 MCP Registry presence does not automatically mean a server is one-click installable in LM Studio. Local AI Tools therefore keeps discovery separate from compatibility.
 
-| Status | Meaning |
-| --- | --- |
-| **LM Studio Ready** | A valid LM Studio configuration can be produced directly from upstream metadata. |
-| **Setup required** | The configuration is structurally valid, but the user must provide values such as an API key, path, argument, or environment variable. |
-| **Compatibility unknown** | Upstream metadata is not sufficient to generate a configuration safely, so Local AI Tools does not guess. |
+| Status                    | Meaning                                                                                                                                |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **LM Studio Ready**       | A valid LM Studio configuration can be produced directly from upstream metadata.                                                       |
+| **Setup required**        | The configuration is structurally valid, but the user must provide values such as an API key, path, argument, or environment variable. |
+| **Compatibility unknown** | Upstream metadata is not sufficient to generate a configuration safely, so Local AI Tools does not guess.                              |
 
 Native LM Studio Hub plugins are considered LM Studio Ready by definition.
 
