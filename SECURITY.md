@@ -4,7 +4,7 @@
 
 Please do not open a public issue for a suspected security vulnerability.
 
-While the repository is private during initial development, contact the maintainer directly through the GitHub account associated with this repository. Before the public OSS launch, a dedicated private vulnerability-reporting path will be configured and this policy updated.
+If GitHub's **Report a vulnerability** option is available for this repository, please use it so the report is handled privately. Otherwise, contact the maintainer (`@sahansera`) privately through GitHub and avoid sharing exploit details in a public issue or discussion.
 
 When reporting, include:
 
@@ -12,6 +12,8 @@ When reporting, include:
 - reproduction steps or proof of concept
 - expected security impact
 - any suggested mitigation
+
+Please allow the maintainer a reasonable opportunity to investigate and coordinate a fix before public disclosure.
 
 ## Scope
 
