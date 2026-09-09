@@ -1,0 +1,19 @@
+---
+interface Props {
+  name?: string;
+  detailsHref?: string;
+  installHref?: string;
+  setupRequired?: boolean;
+}
+const { name = 'tool', detailsHref, installHref, setupRequired = false } = Astro.props;
+const installLabel = !installHref ? 'Use details for setup' : setupRequired ? 'Add to LM Studio (setup required)' : 'Add to LM Studio';
+---
+
+<div class="card-actions">
+  <a class="card-icon-link card-install-link" data-role="install-link" href={installHref} role="link" tabindex="0" aria-disabled={!installHref ? "true" : undefined} aria-label={`${installLabel}: ${name}`} title={installLabel} data-tooltip={installLabel}>
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>
+  </a>
+  <a class="card-icon-link card-icon-link-primary" data-role="link" href={detailsHref} aria-label={`View details for ${name}`} title="View details" data-tooltip="View details">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
+  </a>
+</div>
