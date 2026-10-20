@@ -204,6 +204,8 @@ GitHub Pages deployment is handled by `.github/workflows/deploy-pages.yml`.
 
 Production deployment refreshes LM Studio Hub discovery/enrichment and MCP Registry data, builds Astro + Pagefind, and publishes `apps/web/dist` through GitHub Pages.
 
+The workflow runs on pushes to `main`, daily at 19:17 UTC, and manually through **Actions → Deploy GitHub Pages → Run workflow** on `main`. Scheduled runs refresh and deploy the data without requiring code changes, generated-data commits, or a new release. The live catalogue is a snapshot from the last successful deployment, not a continuously updated feed. GitHub may delay scheduled runs.
+
 Deployment is limited to `main` and waits for the reusable CI checks on the same commit, including the dependency audit. CI and deployment both install from the committed lockfile. When updating dependencies, regenerate and commit `pnpm-lock.yaml` with the manifest changes.
 
 Detail URLs include a stable suffix derived from the exact upstream identifier so case and punctuation differences cannot silently select another listing. Unambiguous older URLs redirect to the new page; previously colliding URLs are not redirected to an arbitrary tool.
