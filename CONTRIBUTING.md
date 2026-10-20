@@ -12,7 +12,7 @@ Thanks for helping improve Local AI Tools.
 
 ## Local development
 
-Use Node.js 22.12+ and the pnpm version specified in `package.json`.
+Use Node.js 22.22+ and the pnpm version specified in `package.json`.
 
 ```bash
 pnpm install --frozen-lockfile
