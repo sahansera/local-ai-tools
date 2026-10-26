@@ -10,7 +10,7 @@
     "typecheck": "pnpm run prepare:catalog && astro check"
   },
   "dependencies": {
-    "astro": "^7.4.1"
+    "astro": "^7.4.2"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.11",
