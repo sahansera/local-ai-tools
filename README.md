@@ -100,7 +100,7 @@ External tools remain in their own repositories and retain their own licenses, r
 
 ### Requirements
 
-- Node.js 22.22+ (or a newer supported LTS release)
+- Node.js 22.23.4+ (or a newer supported LTS release)
 - pnpm 10+
 
 ### Start with fresh marketplace data
