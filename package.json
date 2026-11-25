@@ -10,7 +10,7 @@
     "build": "pnpm -r build",
     "audit:dependencies": "pnpm audit --audit-level=low",
     "build:hub": "pnpm enrich:lmstudio && pnpm build",
-    "build:marketplace": "pnpm enrich:lmstudio && pnpm discover:mcp && pnpm build",
+    "build:marketplace": "pnpm refresh:registries && pnpm build",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm validate:catalog && pnpm build && pnpm verify:web",
     "verify:web": "tsx scripts/verify-web-build.ts",
     "dev": "pnpm --filter @local-ai-tools/web dev",
@@ -26,7 +26,9 @@
     "search:lmstudio": "tsx scripts/search-lmstudio.ts",
     "test": "tsx --test scripts/*.test.ts && pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",
-    "validate:catalog": "pnpm --filter @local-ai-tools/catalog validate"
+    "validate:catalog": "pnpm --filter @local-ai-tools/catalog validate",
+    "refresh:registries": "tsx scripts/refresh-registries.ts",
+    "validate:registries": "tsx scripts/refresh-registries.ts --validate"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

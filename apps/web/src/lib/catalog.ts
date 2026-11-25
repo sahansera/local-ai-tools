@@ -110,6 +110,7 @@ interface HubEnrichedPlugin extends HubDiscoveryPlugin {
 }
 
 interface HubDiscoverySnapshot {
+  generatedAt?: string;
   plugins?: HubDiscoveryPlugin[];
 }
 
@@ -145,6 +146,7 @@ interface McpRegistryServerResponse {
 }
 
 interface McpRegistrySnapshot {
+  fetchedAt?: string;
   servers?: McpRegistryServerResponse[];
 }
 
@@ -432,3 +434,9 @@ const platformValues = tools.flatMap((tool) => tool.platforms);
 
 export const categories = [...new Set(categoryValues)].sort();
 export const platforms = [...new Set(platformValues)].sort();
+
+// Fetch dates describe upstream data, never the time the site happened to build.
+export const registryFreshness = [
+  { label: "LM Studio Hub", fetchedAt: discoverySnapshot?.generatedAt },
+  { label: "MCP Registry", fetchedAt: mcpSnapshot?.fetchedAt },
+];

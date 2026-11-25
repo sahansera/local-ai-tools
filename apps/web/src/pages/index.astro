@@ -4,6 +4,7 @@ import ToolCard from '../components/ToolCard.astro';
 import CardActions from '../components/CardActions.astro';
 import {
   categories,
+  registryFreshness,
   lmStudioHubCount,
   lmStudioReadyMcpCount,
   mcpRegistryCount,
@@ -80,6 +81,16 @@ const browseUrl = withBase('browse.json');
         <div><strong>{mcpRegistryCount.toLocaleString('en-US')}</strong><span class="stat-help" tabindex="0" aria-describedby="mcp-listed-help">MCPs listed<span class="stat-tooltip" role="tooltip" id="mcp-listed-help">MCP server listings imported from the MCP Registry.</span></span></div>
         <div><strong>{lmStudioReadyMcpCount.toLocaleString('en-US')}</strong><span class="stat-help" tabindex="0" aria-describedby="mcp-ready-help">Ready for LM Studio<span class="stat-tooltip" role="tooltip" id="mcp-ready-help">MCPs with enough published metadata to generate an install configuration. Compatibility has not been individually tested.</span></span></div>
       </div>
+      <p class="registry-freshness" aria-label="Catalogue freshness">
+        {registryFreshness.map(({ label, fetchedAt }) => (
+          <span style="display: block">
+            {label}: {fetchedAt && Number.isFinite(Date.parse(fetchedAt)) ? (
+              <>last fetched <time datetime={fetchedAt}>{new Date(fetchedAt).toISOString().slice(0, 10)} UTC</time>
+                {Date.now() - Date.parse(fetchedAt) > 2 * 86_400_000 && ' (refresh delayed; showing saved data)'}</>
+            ) : 'upstream snapshot unavailable'}
+          </span>
+        ))}
+      </p>
     </section>
 
     <section
