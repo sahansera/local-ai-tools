@@ -1,0 +1,36 @@
+name: LM Studio compatibility report
+description: Share a reproducible working setup or compatibility problem. Reports are reviewed before verification.
+title: "[compatibility]: "
+body:
+  - type: input
+    id: tool
+    attributes:
+      label: Listing ID and upstream source
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: LM Studio version
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: OS and runtime version
+    validations:
+      required: true
+  - type: input
+    id: package
+    attributes:
+      label: Package version or remote endpoint
+      description: Remove credentials and private query parameters.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps and result
+      description: Include the procedure, expected result, actual result and redacted configuration/logs. Never include secrets.
+    validations:
+      required: true
