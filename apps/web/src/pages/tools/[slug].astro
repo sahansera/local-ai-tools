@@ -46,6 +46,20 @@ const configJson = tool.lmStudio?.config
   ? JSON.stringify(tool.lmStudio.config, null, 2)
   : undefined;
 
+function feedbackLink(kind: 'metadata' | 'installation' | 'compatibility'): string {
+  const url = new URL('https://github.com/sahansera/local-ai-tools/issues/new');
+  url.searchParams.set('template', kind === 'compatibility' ? 'compatibility.yml' : 'bug.yml');
+  url.searchParams.set('title', `[${kind}]: ${tool!.name}`);
+  url.searchParams.set(kind === 'compatibility' ? 'tool' : 'context', `${tool!.id}\n${tool!.links.homepage}`);
+  return url.href;
+}
+const structuredData = {
+  '@context': 'https://schema.org', '@type': 'SoftwareApplication',
+  name: tool.name, description: tool.description.slice(0, 200), applicationCategory: tool.categories.join(', '),
+  ...(tool.platforms.length ? { operatingSystem: tool.platforms.join(', ') } : {}),
+  ...(tool.setup?.version ? { softwareVersion: tool.setup.version } : {}),
+};
+
 function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
   if (value === true) return yes;
   if (value === false) return no;
@@ -53,7 +67,7 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
 }
 ---
 
-<BaseLayout title={`${tool.name} — Local AI Tools`} description={tool.description}>
+<BaseLayout title={`${tool.name} — Local AI Tools`} description={tool.description} structuredData={structuredData}>
   <main class="site-shell detail-wrap" data-pagefind-body>
     <article class="detail-main">
       <div class="badges">
@@ -248,25 +262,31 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       {typeof tool.source.likes === 'number' && <div class="detail-row"><span>Likes</span><strong>{tool.source.likes}</strong></div>}
       {tool.source.updatedAt && <div class="detail-row"><span>Updated</span><strong>{new Date(tool.source.updatedAt).toLocaleDateString('en-AU')}</strong></div>}
 
+      <nav aria-label="Listing feedback">
+        <a class="secondary-link" href={feedbackLink('metadata')}>Report incorrect metadata →</a>
+        <a class="secondary-link" href={feedbackLink('installation')}>Report broken installation →</a>
+        <a class="secondary-link" href={feedbackLink('compatibility')}>Report LM Studio compatibility →</a>
+      </nav>
+      <p class="section-note">Community reports need reproducible evidence. Submitting a report does not automatically verify this listing.</p>
       <a class="secondary-link" href={tool.links.homepage} rel="external">Open official page →</a>
       {tool.links.repository && <a class="secondary-link" href={tool.links.repository}>View source repository →</a>}
     </aside>
   </main>
 
-  <style>
-    .badge.source {
+  <style is:global>
+    .detail-wrap .badge.source {
       color: var(--accent);
       border-color: rgb(125 211 252 / 22%);
       background: rgb(125 211 252 / 5%);
     }
 
-    .badge.setup {
+    .detail-wrap .badge.setup {
       color: #f5d58a;
       border-color: rgb(251 191 36 / 24%);
       background: rgb(251 191 36 / 6%);
     }
 
-    .compatibility-panel {
+    .detail-wrap .compatibility-panel {
       display: flex;
       max-width: 760px;
       align-items: center;
@@ -279,20 +299,20 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       background: linear-gradient(135deg, rgb(124 58 237 / 8%), rgb(91 92 246 / 4%));
     }
 
-    .compatibility-panel h2 {
+    .detail-wrap .compatibility-panel h2 {
       margin: 0.2rem 0 0.35rem;
       font-size: 1.1rem;
     }
 
-    .compatibility-panel p {
+    .detail-wrap .compatibility-panel p {
       margin: 0;
       color: var(--muted);
       font-size: 0.86rem;
       line-height: 1.55;
     }
 
-    .compatibility-kicker,
-    .config-preview > span {
+    .detail-wrap .compatibility-kicker,
+    .detail-wrap .config-preview > span {
       color: #a78bfa;
       font-size: 0.72rem;
       font-weight: 750;
@@ -300,7 +320,7 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       text-transform: uppercase;
     }
 
-    .inline-install-button {
+    .detail-wrap .inline-install-button {
       display: inline-flex;
       flex: 0 0 auto;
       min-height: 2.75rem;
@@ -321,13 +341,13 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
         filter 150ms ease;
     }
 
-    .inline-install-button:hover {
+    .detail-wrap .inline-install-button:hover {
       transform: translateY(-1px);
       box-shadow: 0 14px 34px rgb(124 58 237 / 32%);
       filter: brightness(1.06);
     }
 
-    .inline-install-button svg {
+    .detail-wrap .inline-install-button svg {
       width: 1rem;
       height: 1rem;
       fill: none;
@@ -337,7 +357,7 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       stroke-width: 2.2;
     }
 
-    .inline-install-button.disabled {
+    .detail-wrap .inline-install-button.disabled {
       border: 1px solid var(--border);
       background: #09101a;
       box-shadow: none;
@@ -346,30 +366,30 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       opacity: 0.65;
     }
 
-    .inline-install-button.disabled:hover {
+    .detail-wrap .inline-install-button.disabled:hover {
       transform: none;
       box-shadow: none;
       filter: none;
     }
 
-    .compatibility-list {
+    .detail-wrap .compatibility-list {
       max-width: 760px;
       margin-top: 1rem;
       color: var(--muted);
       font-size: 0.88rem;
     }
 
-    .compatibility-list ul {
+    .detail-wrap .compatibility-list ul {
       margin: 0.5rem 0 0;
       padding-left: 1.25rem;
     }
 
-    .config-preview {
+    .detail-wrap .config-preview {
       max-width: 760px;
       margin-top: 1rem;
     }
 
-    .config-preview pre {
+    .detail-wrap .config-preview pre {
       overflow-x: auto;
       margin: 0.55rem 0 0;
       border: 1px solid var(--border);
@@ -381,7 +401,7 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       line-height: 1.55;
     }
 
-    .metadata-note {
+    .detail-wrap .metadata-note {
       max-width: 760px;
       margin-top: 1.4rem;
       border: 1px solid rgb(125 211 252 / 18%);
@@ -393,19 +413,19 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       line-height: 1.6;
     }
 
-    .setup-grid {
+    .detail-wrap .setup-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 1rem;
     }
 
-    .setup-grid > div {
+    .detail-wrap .setup-grid > div {
       display: flex;
       flex-direction: column;
       gap: 0.45rem;
     }
 
-    .setup-grid > div > span {
+    .detail-wrap .setup-grid > div > span {
       color: var(--muted);
       font-size: 0.75rem;
       font-weight: 700;
@@ -413,14 +433,14 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       text-transform: uppercase;
     }
 
-    .detail-row strong {
+    .detail-wrap .detail-row strong {
       display: inline-flex;
       align-items: flex-end;
       flex-direction: column;
       gap: 0.15rem;
     }
 
-    .detail-row small {
+    .detail-wrap .detail-row small {
       color: var(--muted);
       font-size: 0.68rem;
       font-weight: 600;
@@ -429,12 +449,12 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
     }
 
     @media (max-width: 700px) {
-      .compatibility-panel {
+      .detail-wrap .compatibility-panel {
         align-items: stretch;
         flex-direction: column;
       }
 
-      .inline-install-button {
+      .detail-wrap .inline-install-button {
         width: 100%;
       }
     }

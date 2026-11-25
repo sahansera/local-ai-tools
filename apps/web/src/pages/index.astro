@@ -12,6 +12,7 @@ import {
   type Tool,
 } from '../lib/catalog';
 import { lmStudioStatus } from '../lib/lmstudio-install';
+import { categorySlugs } from '../lib/sitemap';
 import { withBase } from '../lib/site-path';
 
 const PAGE_SIZE = 24;
@@ -89,6 +90,9 @@ const browseUrl = withBase('browse.json');
       data-browse-url={browseUrl}
       data-page-size={PAGE_SIZE}
     >
+      <nav aria-label="Browse by capability" style="padding: 1rem">
+        {categorySlugs.map((category) => <a class="badge" href={withBase(`categories/${category}/`)}>{category.replaceAll('-', ' ')}</a>)}
+      </nav>
       <div class="filters">
         <div class="search-field">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></svg>

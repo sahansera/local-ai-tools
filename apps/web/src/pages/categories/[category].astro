@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolCard from '../../components/ToolCard.astro';
+import { tools } from '../../lib/catalog';
+import { categorySlugs } from '../../lib/sitemap';
+import { withBase } from '../../lib/site-path';
+import { lmStudioStatus } from '../../lib/lmstudio-install';
+
+export function getStaticPaths() {
+  return categorySlugs.map((category) => ({ params: { category }, props: { category } }));
+}
+const { category } = Astro.props;
+const label = category.replaceAll('-', ' ');
+const matches = tools.filter((tool) => tool.categories.includes(category));
+const featured = [...matches].sort((a, b) => Number(lmStudioStatus(b) === 'ready') - Number(lmStudioStatus(a) === 'ready') || a.name.localeCompare(b.name)).slice(0, 24);
+---
+<BaseLayout title={`${label[0].toUpperCase() + label.slice(1)} tools for LM Studio — Local AI Tools`} description={`Discover ${label} plugins and MCP servers for LM Studio, with source provenance and setup information.`}>
+  <main class="site-shell" style="padding-block: 2rem">
+    <a href={withBase()}>← Browse all tools</a>
+    <h1>{label[0].toUpperCase() + label.slice(1)} tools for LM Studio</h1>
+    <p>{matches.length} listings mention this capability. Categories may be inferred from public metadata; inspect the upstream evidence and installation requirements.</p>
+    <div class="tool-grid">{featured.map((tool) => <ToolCard tool={tool} />)}</div>
+    <p><a href={`${withBase()}?category=${encodeURIComponent(category)}&compatibility=all#tools`}>Search all {label} listings →</a></p>
+  </main>
+</BaseLayout>
