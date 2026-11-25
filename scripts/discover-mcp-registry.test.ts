@@ -156,3 +156,23 @@ test("ingested default URL values resolve before installation", async () => {
     result.config?.url,
   );
 });
+
+test("repeated pagination cursors fail instead of looping", async () => {
+  let requests = 0;
+  const fetcher = (async () => {
+    requests++;
+    return new Response(
+      JSON.stringify({ servers: [], metadata: { nextCursor: "loop" } }),
+    );
+  }) as typeof fetch;
+  await assert.rejects(fetchMcpRegistry(fetcher), /Repeated.*cursor/);
+  assert.equal(requests, 2);
+});
+
+test("empty registry and malformed entries fail closed", async () => {
+  for (const servers of [[], [null], [{ server: { name: "test/broken" } }]]) {
+    const fetcher = (async () =>
+      new Response(JSON.stringify({ servers }))) as typeof fetch;
+    await assert.rejects(fetchMcpRegistry(fetcher));
+  }
+});

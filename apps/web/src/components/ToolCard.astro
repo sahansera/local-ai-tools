@@ -76,7 +76,7 @@ const displayTags = visibleCategories.length > 0 ? visibleCategories : tool.type
     <span class:list={['badge', 'compatibility-badge', compatibility === 'ready' && 'good', compatibility === 'setup-required' && 'setup']} title={compatibilityReason}>{compatibility === 'ready' ? 'Ready' : compatibilityLabel}</span>
   </div>
   <div class="card-topline" hidden={tool.runtime.local === 'unknown' && tool.runtime.apiKeyRequired !== false && !(tool.risks?.length)}>
-    {tool.runtime.local === true && <span class="badge good">Fully local</span>}
+    {tool.runtime.local === true && <span class="badge good">Runs locally</span>}
     {tool.runtime.local === false && <span class="badge">Remote</span>}
     {tool.runtime.apiKeyRequired === false && <span class="badge good">No API key</span>}
     {(tool.risks?.length ?? 0) > 0 && <span class="badge risk">⚠ {tool.risks?.length} risk signal{tool.risks?.length === 1 ? '' : 's'}</span>}

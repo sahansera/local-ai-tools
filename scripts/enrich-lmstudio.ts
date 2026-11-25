@@ -1,5 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { fetchJson } from "./fetch-json.ts";
+import { enrichedSchema } from "../packages/schema/src/registries.ts";
 import { classifyPlugin, searchableTerms } from "./lmstudio-classifier.js";
 
 const DISCOVERY_PATH = "generated/lmstudio-discovery.json";
@@ -111,15 +113,14 @@ async function fetchDetail(
 
   for (const endpoint of candidates) {
     try {
-      const response = await fetch(endpoint, {
+      const data = await fetchJson(endpoint, {
         headers: {
           Accept: "application/json",
           "User-Agent":
             "local-ai-tools-enrichment/0.1 (+https://github.com/sahansera/local-ai-tools)",
         },
       });
-      if (!response.ok) continue;
-      return { endpoint, data: await response.json() };
+      return { endpoint, data };
     } catch {
       // A failed detail request should not abort the review snapshot.
     }
@@ -264,6 +265,7 @@ async function main(): Promise<void> {
     plugins,
   };
 
+  enrichedSchema.parse(output);
   const absoluteOutput = resolve(OUTPUT_PATH);
   await mkdir(dirname(absoluteOutput), { recursive: true });
   await writeFile(
