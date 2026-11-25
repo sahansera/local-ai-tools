@@ -49,7 +49,7 @@ test("initial and dynamic cards retain details, icons and installation links", a
   expect(errors).toEqual([]);
 });
 
-test("MCP details expose config and marks required credentials as setup", async ({
+test("MCP details expose config and withholds installation until credentials are configured", async ({
   page,
 }) => {
   await page.goto("?q=Registry+Video+01&type=mcp");
@@ -65,7 +65,7 @@ test("MCP details expose config and marks required credentials as setup", async 
   await expect(page.locator("#result-count")).toHaveText("1 tool");
   await expect(
     page.locator('[data-role="install-link"]').first(),
-  ).toHaveAttribute("title", "Add to LM Studio (setup required)");
+  ).toHaveAttribute("aria-disabled", "true");
 });
 
 test("failed browse fetch retains initial cards and offers a working retry", async ({
