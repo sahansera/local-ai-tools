@@ -63,7 +63,7 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
         <span class:list={['badge', compatibility === 'ready' && 'good', compatibility === 'setup-required' && 'setup']}>
           {compatibilityLabel}
         </span>
-        {tool.runtime.local === true && <span class="badge good" data-pagefind-filter="local:true">Fully local</span>}
+        {tool.runtime.local === true && <span class="badge good" data-pagefind-filter="local:true">Runs locally</span>}
         {tool.runtime.local === false && <span class="badge">Remote</span>}
         {tool.runtime.apiKeyRequired === false && <span class="badge good" data-pagefind-filter="api-key:false">No API key</span>}
       </div>
@@ -173,7 +173,7 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
       <div class="detail-section">
         <h2>{inferred?.capabilities ? 'Detected capabilities' : 'Capabilities'}</h2>
         {inferred?.capabilities && (
-          <p class="section-note">These capabilities were inferred from the plugin's public Hub metadata.</p>
+          <p class="section-note">These capabilities are heuristic matches in public metadata, not verified functionality.</p>
         )}
         {visibleCategories.length > 0
           ? (
@@ -183,6 +183,18 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
           )
           : <p class="section-note">Capability classification is not available for this listing yet.</p>}
       </div>
+
+      {tool.capabilityEvidence && Object.keys(tool.capabilityEvidence).length > 0 && (
+        <details class="detail-section">
+          <summary>Capability evidence</summary>
+          {Object.entries(tool.capabilityEvidence).map(([category, evidence]) => (
+            <div><h3>{category}</h3>{evidence.map((item) => (
+              <p><small>{item.field} · {item.confidence} confidence</small><br />{item.excerpt}</p>
+            ))}</div>
+          ))}
+          <p class="section-note">Read the upstream listing to confirm these claims. Categories can be incomplete or wrong.</p>
+        </details>
+      )}
 
       {tool.tags.length > 0 && (
         <div class="detail-section">
@@ -229,6 +241,11 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
           {inferred?.runtime && tool.runtime.local !== 'unknown' && <small>Inferred</small>}
         </strong>
       </div>
+      <div class="detail-row">
+        <span>Offline processing</span>
+        <strong>{yesNoUnknown(tool.runtime.offlineCapable ?? 'unknown', 'Reported capable', 'Not available')}</strong>
+      </div>
+      <p class="section-note">Local execution can still send data to external services. It does not establish fully local or offline processing.</p>
       <div class="detail-row">
         <span>Network</span>
         <strong>

@@ -239,7 +239,7 @@ const browseUrl = withBase('browse.json');
       if (tool.compatibility === 'ready') compatibilityBadge.classList.add('good');
       if (tool.compatibility === 'setup-required') compatibilityBadge.classList.add('setup');
 
-      if (tool.runtime.local === true) addBadge(topline, 'Fully local', 'good');
+      if (tool.runtime.local === true) addBadge(topline, 'Runs locally', 'good');
       if (tool.runtime.local === false) addBadge(topline, 'Remote');
       if (tool.runtime.apiKeyRequired === false) addBadge(topline, 'No API key', 'good');
       if (tool.risks?.length) addBadge(topline, `⚠ ${tool.risks.length} risk signal${tool.risks.length === 1 ? '' : 's'}`, 'risk');

@@ -1,3 +1,7 @@
+import {
+  classifyMcp,
+  type McpEvidence,
+} from "../../../../scripts/mcp-classifier";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -57,7 +61,9 @@ export interface Tool {
     local: RuntimeValue;
     networkRequired: RuntimeValue;
     apiKeyRequired: RuntimeValue;
+    offlineCapable?: RuntimeValue;
   };
+  capabilityEvidence?: Record<string, McpEvidence[]>;
   platforms: Array<"macos" | "windows" | "linux">;
   source: ToolSource;
   setup?: ToolSetup;
@@ -279,8 +285,7 @@ function toMcpTool(entry: McpRegistryServerResponse): Tool | null {
 
   const packages = Array.isArray(server.packages) ? server.packages : [];
   const remotes = Array.isArray(server.remotes) ? server.remotes : [];
-  const hasPackages = packages.length > 0;
-  const hasRemotes = remotes.length > 0;
+  const classification = classifyMcp({ ...server, packages, remotes });
   const packageTypes = unique(packages.map((pkg) => pkg.registryType));
   const transports = unique([
     ...packages.map((pkg) => pkg.transport?.type),
@@ -308,7 +313,11 @@ function toMcpTool(entry: McpRegistryServerResponse): Tool | null {
       name: author,
       handle: author,
     },
-    categories: ["uncategorized"],
+    categories: Object.keys(classification.capabilities).length
+      ? Object.keys(classification.capabilities)
+      : ["uncategorized"],
+    capabilityEvidence: classification.capabilities,
+    risks: Object.keys(classification.risks),
     tags: unique([
       ...packageTypes,
       ...transports,
@@ -318,19 +327,11 @@ function toMcpTool(entry: McpRegistryServerResponse): Tool | null {
       homepage: server.websiteUrl || repository || registryApiUrl,
       repository,
     },
-    runtime: {
-      local:
-        hasPackages && !hasRemotes
-          ? true
-          : hasRemotes && !hasPackages
-            ? false
-            : "unknown",
-      networkRequired: hasRemotes && !hasPackages ? true : "unknown",
-      apiKeyRequired: "unknown",
-    },
+    runtime: classification.runtime,
     platforms: [],
     source: {
       kind: "mcp-registry",
+      inferred: { capabilities: true, risks: true },
       updatedAt: official?.updatedAt ?? official?.publishedAt,
     },
     setup: {
