@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { toolSlug, tools } from "../lib/catalog";
+import { toolSlug, tools, registryFreshness } from "../lib/catalog";
 import { lmStudioInstallUrl, lmStudioStatus } from "../lib/lmstudio-install";
 
 export const GET: APIRoute = () => {
@@ -29,6 +29,7 @@ export const GET: APIRoute = () => {
   return new Response(
     JSON.stringify({
       schemaVersion: 1,
+      freshness: registryFreshness,
       count: browseTools.length,
       tools: browseTools,
     }),

@@ -1,5 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
+import { fetchJson } from "./fetch-json.ts";
+import { registryEntrySchema } from "../packages/schema/src/registries.ts";
 import { safeWebUrl, safeWebUrlTemplate } from "./web-url.ts";
 
 export interface McpRegistryPackage {
@@ -95,6 +97,8 @@ export async function fetchMcpRegistry(
 ): Promise<McpRegistryServerResponse[]> {
   const servers: McpRegistryServerResponse[] = [];
   let cursor: string | undefined;
+  const seenCursors = new Set<string>();
+  let pageCount = 0;
 
   do {
     const url = new URL("/v0.1/servers", baseUrl);
@@ -102,26 +106,38 @@ export async function fetchMcpRegistry(
     url.searchParams.set("version", "latest");
     if (cursor) url.searchParams.set("cursor", cursor);
 
-    const response = await fetcher(url, {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "local-ai-tools/registry-ingestion",
+    if (++pageCount > 1000) throw new Error("MCP Registry exceeded 1000 pages");
+    const payload = (await fetchJson(
+      url,
+      {
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "local-ai-tools/registry-ingestion",
+        },
       },
-    });
+      { fetcher },
+    )) as McpRegistryListResponse;
 
-    if (!response.ok) {
-      throw new Error(
-        `MCP Registry request failed (${response.status} ${response.statusText}) for ${url}`,
-      );
-    }
-
-    const payload = (await response.json()) as McpRegistryListResponse;
-    if (!Array.isArray(payload.servers)) {
+    if (!payload || !Array.isArray(payload.servers)) {
       throw new Error("MCP Registry response did not contain a servers array");
     }
 
-    servers.push(...payload.servers.map(sanitizeEntry));
-    cursor = payload.metadata?.nextCursor || undefined;
+    servers.push(
+      ...payload.servers.map((entry) => {
+        registryEntrySchema.parse(entry);
+        return sanitizeEntry(entry);
+      }),
+    );
+    const next = payload.metadata?.nextCursor;
+    if (next !== undefined && typeof next !== "string") {
+      throw new Error("Invalid MCP Registry cursor");
+    }
+    cursor = next || undefined;
+    if (cursor) {
+      if (seenCursors.has(cursor))
+        throw new Error("Repeated MCP Registry cursor");
+      seenCursors.add(cursor);
+    }
   } while (cursor);
 
   const latestByName = new Map<string, McpRegistryServerResponse>();
@@ -136,6 +152,7 @@ export async function fetchMcpRegistry(
     latestByName.set(name, entry);
   }
 
+  if (latestByName.size === 0) throw new Error("MCP Registry is empty");
   return [...latestByName.values()].sort((a, b) =>
     a.server.name.localeCompare(b.server.name),
   );

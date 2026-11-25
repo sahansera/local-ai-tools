@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { toolRoutes } from "../apps/web/src/lib/catalog.ts";
@@ -54,4 +54,26 @@ assert.deepEqual(
 );
 console.log(
   `Verified ${browse.count} unique listing pages and ${toolRoutes.redirects.size} legacy redirects.`,
+);
+
+// GitHub Pages limits published sites to 1 GB. Reject oversized output before
+// saving it as known-good or handing it to the deployment action.
+function outputBytes(directory: string): number {
+  return readdirSync(directory, { withFileTypes: true }).reduce(
+    (total, entry) => {
+      const file = path.join(directory, entry.name);
+      return (
+        total + (entry.isDirectory() ? outputBytes(file) : statSync(file).size)
+      );
+    },
+    0,
+  );
+}
+const bytes = outputBytes(dist);
+console.log(
+  `Static output: ${bytes.toLocaleString("en-US")} bytes (1 GB Pages limit).`,
+);
+assert.ok(
+  bytes < 1_000_000_000,
+  "Static output exceeds GitHub Pages' 1 GB limit",
 );

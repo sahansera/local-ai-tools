@@ -1,5 +1,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import { fetchJson } from "./fetch-json.ts";
+import { discoverySchema } from "../packages/schema/src/registries.ts";
 import { safeWebUrl } from "./web-url.ts";
 
 const HUB_ARTIFACTS_URL = "https://lmstudio.ai/api/v1/artifacts";
@@ -127,29 +130,23 @@ async function main(): Promise<void> {
       ? process.argv[outputArgIndex + 1]
       : DEFAULT_OUTPUT;
 
-  const response = await fetch(HUB_ARTIFACTS_URL, {
+  const payload = (await fetchJson(HUB_ARTIFACTS_URL, {
     headers: {
       Accept: "application/json",
       "User-Agent":
         "local-ai-tools-discovery/0.1 (+https://github.com/sahansera/local-ai-tools)",
     },
-  });
+  })) as HubArtifactsResponse;
 
-  if (!response.ok) {
-    throw new Error(
-      `LM Studio Hub request failed: ${response.status} ${response.statusText}`,
-    );
-  }
-
-  const payload = (await response.json()) as HubArtifactsResponse;
-  const artifacts = payload.publicArtifacts;
+  const artifacts = payload?.publicArtifacts;
   if (!Array.isArray(artifacts)) {
     throw new Error("LM Studio Hub response did not contain publicArtifacts[]");
   }
 
   const plugins = artifacts
     .filter(
-      (artifact) => artifact.type === "plugin" && artifact.private !== true,
+      (artifact) =>
+        artifact && artifact.type === "plugin" && artifact.private !== true,
     )
     .map(normalizePlugin)
     .sort(
@@ -172,6 +169,7 @@ async function main(): Promise<void> {
     plugins,
   };
 
+  discoverySchema.parse(output);
   const absoluteOutput = resolve(outputPath);
   await mkdir(dirname(absoluteOutput), { recursive: true });
   await writeFile(
@@ -194,7 +192,8 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exitCode = 1;
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)
+  main().catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  });

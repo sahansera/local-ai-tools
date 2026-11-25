@@ -4,8 +4,10 @@ on:
   push:
     branches:
       - main
-  schedule:
-    - cron: "17 19 * * *"
+  workflow_run:
+    workflows: ["Refresh registries"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -17,7 +19,11 @@ concurrency:
 
 jobs:
   check:
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
     uses: ./.github/workflows/ci.yml
 
   build:
@@ -25,6 +31,7 @@ jobs:
     permissions:
       contents: read
       pages: read
+      actions: read
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -48,11 +55,35 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
 
-      - name: Build marketplace with fresh registries
+      - name: Download snapshots from successful refresh
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          name: registry-snapshots
+          path: generated
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Restore last-known-good snapshots for code deployments
+        if: github.event_name != 'workflow_run'
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            generated/lmstudio-discovery.json
+            generated/lmstudio-enriched.json
+            generated/mcp-registry.json
+          key: registries-v1-deploy-${{ github.run_id }}
+          restore-keys: registries-v1-
+          fail-on-cache-miss: true
+
+      - name: Validate complete nonempty snapshots
+        run: pnpm validate:registries
+
+      - name: Build marketplace from validated snapshots
         env:
           SITE_URL: ${{ vars.SITE_URL || 'https://sahansera.github.io' }}
           SITE_BASE: ${{ vars.SITE_BASE || '/local-ai-tools' }}
-        run: pnpm build:marketplace
+        run: pnpm build
 
       - name: Verify full marketplace routes
         env:
