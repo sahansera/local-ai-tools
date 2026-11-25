@@ -37,3 +37,13 @@ A normal `pnpm build` still supports authored-only development without network a
 - A 50% count floor catches obvious truncation, not every possible upstream omission. Changed schema or genuine large removals require investigation before updating snapshot policy.
 - The 30-day fallback policy deliberately fails closed after prolonged outages. A previously deployed static site can remain online longer; its displayed fetch dates remain unchanged.
 - Actions caches are branch-scoped. Only validated default-branch workflow results are used for production; PR caches cannot become the default-branch fallback.
+
+## Live measurements (25 November 2026)
+
+On macOS arm64 with Node 26.8.1 and pnpm 10.15.1, a complete live refresh returned 373 Hub plugins (266 families) and 73,337 MCP entries. The combined site contains 73,603 canonical listings and 73,578 legacy redirects; all routes passed verification.
+
+The original full static build took 204.60 seconds, peaked at about 5.15 GB RSS, and produced 1,105,426,397 bytes of files. This exceeds [GitHub Pages' 1 GB published-site limit](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits). Moving Astro's repeated inline styles into shared CSS files reduced output to **846,568,275 bytes** (23.4% smaller), without removing listings or redirects. The second build took 229.61 seconds and peaked at about 5.63 GB RSS; concurrent machine load means this is not evidence of a speed or memory improvement. Pagefind alone took about 134–135 seconds in both builds.
+
+`verify:web` now sums output file sizes and rejects builds at or above 1,000,000,000 bytes, before snapshots can be cached as known-good or uploaded for deployment. There is about 153 MB of logical-file-size headroom in this dataset, so catalogue growth still needs monitoring. Disk allocation is larger than logical size because the site has over 220,000 small files.
+
+The full browse JSON is 51,128,571 bytes and about 9.6 MB with maximum gzip compression (9.8 MB with default gzip settings). This remains a substantial mobile first-load cost. Search/index measurements and further static payload changes belong to the search/performance work; no backend is introduced here. No live deployment or Ubuntu/Node 22 benchmark was performed.
