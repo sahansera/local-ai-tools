@@ -26,10 +26,12 @@
     "search:lmstudio": "tsx scripts/search-lmstudio.ts",
     "test": "tsx --test scripts/*.test.ts && pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",
-    "validate:catalog": "pnpm --filter @local-ai-tools/catalog validate"
+    "validate:catalog": "pnpm --filter @local-ai-tools/catalog validate",
+    "test:browser": "playwright test"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^26.6.5",
     "eslint": "^10.13.0",
     "globals": "^17.13.0",

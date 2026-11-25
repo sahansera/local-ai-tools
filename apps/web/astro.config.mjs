@@ -8,6 +8,9 @@ export default defineConfig({
   base: process.env.SITE_BASE ?? "/",
   vite: {
     define: {
+      __CATALOG_SNAPSHOT_DIR__: JSON.stringify(
+        process.env.CATALOG_SNAPSHOT_DIR || "",
+      ),
       __CATALOG_ROOT__: JSON.stringify(
         fileURLToPath(new URL("../../", import.meta.url)),
       ),

@@ -1,0 +1,550 @@
+{
+  "source": "mcp-registry",
+  "apiVersion": "v0.1",
+  "fetchedAt": "2026-11-25T00:00:00Z",
+  "count": 32,
+  "servers": [
+    {
+      "server": {
+        "name": "io.example/video-00",
+        "title": "Registry Video 00",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-00",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-01",
+        "title": "Registry Video 01",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-01",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-02",
+        "title": "Registry Video 02",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-02",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-03",
+        "title": "Registry Video 03",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-03",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-04",
+        "title": "Registry Video 04",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-04",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-05",
+        "title": "Registry Video 05",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-05",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-06",
+        "title": "Registry Video 06",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-06",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-07",
+        "title": "Registry Video 07",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-07",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-08",
+        "title": "Registry Video 08",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-08",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-09",
+        "title": "Registry Video 09",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-09",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-10",
+        "title": "Registry Video 10",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-10",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-11",
+        "title": "Registry Video 11",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-11",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-12",
+        "title": "Registry Video 12",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-12",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-13",
+        "title": "Registry Video 13",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-13",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-14",
+        "title": "Registry Video 14",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-14",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-15",
+        "title": "Registry Video 15",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-15",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-16",
+        "title": "Registry Video 16",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-16",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-17",
+        "title": "Registry Video 17",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-17",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-18",
+        "title": "Registry Video 18",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-18",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-19",
+        "title": "Registry Video 19",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-19",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-20",
+        "title": "Registry Video 20",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-20",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-21",
+        "title": "Registry Video 21",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-21",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-22",
+        "title": "Registry Video 22",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-22",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-23",
+        "title": "Registry Video 23",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-23",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-24",
+        "title": "Registry Video 24",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-24",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-25",
+        "title": "Registry Video 25",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-25",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-26",
+        "title": "Registry Video 26",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-26",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-27",
+        "title": "Registry Video 27",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-27",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-28",
+        "title": "Registry Video 28",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-28",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/video-29",
+        "title": "Registry Video 29",
+        "description": "Video editing with FFmpeg",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/video-29",
+            "transport": {
+              "type": "stdio"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/secret",
+        "title": "Credential Example",
+        "description": "Database integration",
+        "version": "1.0.0",
+        "packages": [
+          {
+            "registryType": "npm",
+            "identifier": "@example/secret",
+            "transport": {
+              "type": "stdio"
+            },
+            "environmentVariables": [
+              {
+                "name": "API_KEY",
+                "isRequired": true,
+                "isSecret": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "server": {
+        "name": "io.example/unknown",
+        "title": "Unknown Example",
+        "description": "Unspecified integration",
+        "version": "1.0.0"
+      }
+    }
+  ]
+}

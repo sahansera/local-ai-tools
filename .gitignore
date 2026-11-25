@@ -70,3 +70,7 @@ generated/mcp-registry.json
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Browser test reports
+playwright-report/
+test-results/

@@ -1,0 +1,58 @@
+{
+  "environment": {
+    "node": "v26.8.1",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "tools": 73603,
+  "bytes": 51128571,
+  "gzipBytes": 9822518,
+  "jsonParseMs": 178.44245800000004,
+  "indexBuildMs": 818.0665000000001,
+  "approximateIndexHeapBytes": 122104032,
+  "rows": [
+    {
+      "query": "edit videos",
+      "count": 2037,
+      "firstMs": 1.2647910000000593,
+      "medianMs": 0.2769999999998163,
+      "p95Ms": 0.69337500000006
+    },
+    {
+      "query": "search the internet",
+      "count": 3946,
+      "firstMs": 0.5901660000001812,
+      "medianMs": 0.35987500000010186,
+      "p95Ms": 1.0813339999999698
+    },
+    {
+      "query": "remember conversations",
+      "count": 1530,
+      "firstMs": 0.9356660000000829,
+      "medianMs": 0.4555000000000291,
+      "p95Ms": 0.49375000000009095
+    },
+    {
+      "query": "read my documents",
+      "count": 3245,
+      "firstMs": 0.8969999999999345,
+      "medianMs": 0.5646249999999782,
+      "p95Ms": 0.9530839999999898
+    },
+    {
+      "query": "vidoe",
+      "count": 1285,
+      "firstMs": 0.6298750000000837,
+      "medianMs": 0.31379100000003746,
+      "p95Ms": 0.5437500000000455
+    },
+    {
+      "query": "postgres",
+      "count": 252,
+      "firstMs": 0.877875000000131,
+      "medianMs": 0.4716670000000249,
+      "p95Ms": 0.9980419999999413
+    }
+  ],
+  "limitations": "Node desktop CPU benchmark; excludes network, browser layout, rendering and mobile CPU. Heap delta includes query allocations and is not peak RSS."
+}
