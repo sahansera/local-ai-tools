@@ -28,10 +28,12 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "validate:catalog": "pnpm --filter @local-ai-tools/catalog validate",
     "refresh:registries": "tsx scripts/refresh-registries.ts",
-    "validate:registries": "tsx scripts/refresh-registries.ts --validate"
+    "validate:registries": "tsx scripts/refresh-registries.ts --validate",
+    "test:browser": "playwright test"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^26.6.5",
     "eslint": "^10.13.0",
     "globals": "^17.13.0",

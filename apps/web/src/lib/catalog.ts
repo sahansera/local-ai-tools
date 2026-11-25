@@ -164,12 +164,14 @@ const repoRoot =
   typeof __CATALOG_ROOT__ === "string"
     ? __CATALOG_ROOT__
     : fileURLToPath(new URL("../../../../", import.meta.url));
-const hubDiscoveryPath = path.join(
-  repoRoot,
-  "generated/lmstudio-discovery.json",
-);
-const hubEnrichedPath = path.join(repoRoot, "generated/lmstudio-enriched.json");
-const mcpRegistryPath = path.join(repoRoot, "generated/mcp-registry.json");
+declare const __CATALOG_SNAPSHOT_DIR__: string;
+const snapshotDir =
+  (typeof __CATALOG_SNAPSHOT_DIR__ === "string" && __CATALOG_SNAPSHOT_DIR__) ||
+  process.env.CATALOG_SNAPSHOT_DIR ||
+  path.join(repoRoot, "generated");
+const hubDiscoveryPath = path.join(snapshotDir, "lmstudio-discovery.json");
+const hubEnrichedPath = path.join(snapshotDir, "lmstudio-enriched.json");
+const mcpRegistryPath = path.join(snapshotDir, "mcp-registry.json");
 
 function loadSnapshot<T>(path: string): T | null {
   try {

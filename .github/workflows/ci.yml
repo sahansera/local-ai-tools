@@ -66,3 +66,9 @@ jobs:
         env:
           SITE_BASE: /local-ai-tools
         run: pnpm verify:web
+
+      - name: Install browser for regression tests
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Browser regression tests
+        run: pnpm test:browser

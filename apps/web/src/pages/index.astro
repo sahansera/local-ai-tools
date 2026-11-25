@@ -209,6 +209,10 @@ const browseUrl = withBase('browse.json');
     const browseUrl = panel.dataset.browseUrl;
 
     let allTools = null;
+    let loadingTools = null;
+    let searchIndex = null;
+    let searchScores = null;
+    let relevance = null;
     let currentResults = null;
     let visibleLimit = pageSize;
     let searchTimer = null;
@@ -239,6 +243,8 @@ const browseUrl = withBase('browse.json');
     const makeCard = (tool) => {
       const card = cardTemplate.content.firstElementChild.cloneNode(true);
       card.dataset.type = tool.type;
+      card.dataset.id = tool.id;
+      card.setAttribute('data-tool-card', '');
       card.querySelector('[data-role="monogram"]').textContent = tool.name.slice(0, 2).toUpperCase();
       const topline = card.querySelector('[data-role="topline"]');
       card.querySelector('[data-role="type"]').textContent =
@@ -294,35 +300,29 @@ const browseUrl = withBase('browse.json');
       return card;
     };
 
-    const buildSearchText = (tool) =>
-      [
-        tool.name,
-        tool.description,
-        tool.author,
-        sourceLabel(tool.source.kind),
-        compatibilityLabel(tool.compatibility),
-        tool.type,
-        ...tool.categories,
-        ...tool.tags,
-        ...tool.platforms,
-      ]
-        .join(' ')
-        .toLowerCase();
-
     const ensureTools = async () => {
       if (allTools) return allTools;
+      if (loadingTools) return loadingTools;
       loadMoreButton.disabled = true;
       loadMoreButton.textContent = 'Loading…';
-
-      const response = await fetch(browseUrl);
-      if (!response.ok) throw new Error(`Browse index request failed: ${response.status}`);
-      const payload = await response.json();
-      if (!Array.isArray(payload.tools)) throw new Error('Browse index is invalid');
-
-      allTools = payload.tools.map((tool) => ({ ...tool, searchText: buildSearchText(tool) }));
-      loadMoreButton.disabled = false;
-      loadMoreButton.textContent = 'Load more';
-      return allTools;
+      loadingTools = (async () => {
+        const [response, search] = await Promise.all([
+          fetch(browseUrl, { signal: AbortSignal.timeout(15000) }),
+          import(new URL('search.js', new URL(browseUrl, document.baseURI)).href),
+        ]);
+        if (!response.ok) throw new Error(`Browse index request failed: ${response.status}`);
+        const payload = await response.json();
+        if (!Array.isArray(payload.tools) || !payload.tools.length) throw new Error('Browse index is invalid');
+        const index = search.createSearchIndex(payload.tools);
+        searchIndex = index;
+        searchScores = search.searchScores;
+        allTools = payload.tools;
+        loadMoreButton.disabled = false;
+        loadMoreButton.textContent = 'Load more';
+        return allTools;
+      })();
+      try { return await loadingTools; }
+      finally { loadingTools = null; }
     };
 
     const values = () => ({
@@ -334,7 +334,6 @@ const browseUrl = withBase('browse.json');
     });
 
     const matches = (tool, filters) =>
-      (!filters.query || tool.searchText.includes(filters.query)) &&
       (!filters.type || tool.type === filters.type) &&
       (!filters.compatibility || tool.compatibility === filters.compatibility) &&
       (!filters.category || tool.categories.includes(filters.category)) &&
@@ -386,7 +385,7 @@ const browseUrl = withBase('browse.json');
           byName(a, b)
         );
       }
-      return recommendationScore(b) - recommendationScore(a) || byName(a, b);
+      return (relevance ? (relevance.get(b.id) ?? 0) - (relevance.get(a.id) ?? 0) : 0) || recommendationScore(b) - recommendationScore(a) || byName(a, b);
     };
 
     const render = () => {
@@ -405,7 +404,9 @@ const browseUrl = withBase('browse.json');
       try {
         const catalogue = await ensureTools();
         const filters = values();
-        currentResults = catalogue.filter((tool) => matches(tool, filters)).sort(compareTools);
+        const indexedScores = searchScores(searchIndex, filters.query);
+        relevance = indexedScores && new Map([...indexedScores].map(([index, score]) => [catalogue[index].id, score]));
+        currentResults = catalogue.filter((tool) => (!relevance || relevance.has(tool.id)) && matches(tool, filters)).sort(compareTools);
         if (resetLimit) visibleLimit = pageSize;
         render();
       } catch (error) {
@@ -417,19 +418,42 @@ const browseUrl = withBase('browse.json');
       }
     };
 
+    const controls = [
+      ['type', typeFilter, ''], ['compatibility', compatibilityFilter, 'ready'],
+      ['category', categoryFilter, ''], ['platform', platformFilter, ''],
+      ['sort', sortFilter, 'recommended'],
+    ];
+    const readUrl = () => {
+      const params = new URL(location.href).searchParams;
+      searchInput.value = (params.get('q') || '').slice(0, 200);
+      for (const [key, control, fallback] of controls) {
+        const raw = params.get(key);
+        const value = key === 'compatibility' && raw === 'all' ? '' : raw;
+        control.value = value !== null && [...control.options].some((option) => option.value === value) ? value : fallback;
+      }
+    };
+    const writeUrl = (push) => {
+      const url = new URL(location.href);
+      if (searchInput.value.trim()) url.searchParams.set('q', searchInput.value.trim().slice(0, 200));
+      else url.searchParams.delete('q');
+      for (const [key, control, fallback] of controls) {
+        if (control.value === fallback) url.searchParams.delete(key);
+        else url.searchParams.set(key, key === 'compatibility' && !control.value ? 'all' : control.value);
+      }
+      if (url.href !== location.href) history[push ? 'pushState' : 'replaceState'](null, '', url);
+    };
+    searchInput.maxLength = 200;
     searchInput.addEventListener('input', () => {
       clearTimeout(searchTimer);
+      writeUrl(false);
       searchTimer = setTimeout(() => refresh(true), 140);
     });
-    for (const control of [
-      typeFilter,
-      compatibilityFilter,
-      categoryFilter,
-      platformFilter,
-      sortFilter,
-    ]) {
-      control.addEventListener('change', () => refresh(true));
+    for (const [, control] of controls) {
+      control.addEventListener('change', () => { writeUrl(true); refresh(true); });
     }
+    window.addEventListener('popstate', () => { readUrl(); refresh(true); });
+    readUrl();
+    if (['q', ...controls.map(([key]) => key)].some((key) => new URL(location.href).searchParams.has(key))) refresh(true);
     loadMoreButton.addEventListener('click', async () => {
       visibleLimit += pageSize;
       await refresh(false);
