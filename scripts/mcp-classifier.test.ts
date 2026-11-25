@@ -42,7 +42,7 @@ test("remote-only transport needs a network; mixed modes remain unknown", () => 
     local: false,
     networkRequired: true,
     apiKeyRequired: "unknown",
-    offlineCapable: false,
+    offlineCapable: "unknown",
   });
   assert.equal(
     classifyMcp({ packages: [{}], remotes: [{}] }).runtime.local,

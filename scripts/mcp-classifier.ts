@@ -81,8 +81,7 @@ export function classifyMcp(server: {
     networkRequired:
       hasRemotes && !hasPackages ? (true as const) : ("unknown" as const),
     apiKeyRequired: "unknown" as const,
-    offlineCapable:
-      hasRemotes && !hasPackages ? (false as const) : ("unknown" as const),
+    offlineCapable: "unknown" as const,
   };
   return { capabilities, risks, runtime };
 }
