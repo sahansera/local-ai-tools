@@ -170,6 +170,10 @@ function yesNoUnknown(value: RuntimeValue, yes: string, no: string): string {
         </div>
       )}
 
+      {tool.type === 'mcp' && (
+        <p class="section-note">Generated configuration · not runtime-tested with LM Studio. Registry publication is not a security review or endorsement. Review the upstream source, permissions and network access before installing.</p>
+      )}
+
       <div class="detail-section">
         <h2>{inferred?.capabilities ? 'Detected capabilities' : 'Capabilities'}</h2>
         {inferred?.capabilities && (

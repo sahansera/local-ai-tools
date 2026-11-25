@@ -1,4 +1,5 @@
-import { safeWebUrl, safeWebUrlTemplate } from "../../../../scripts/web-url";
+import { createHash } from "node:crypto";
+import { safeWebUrlTemplate } from "../../../../scripts/web-url";
 
 export type LmStudioCompatibilityStatus =
   "ready" | "setup-required" | "unknown";
@@ -89,8 +90,89 @@ const COMMAND_BY_REGISTRY: Record<string, string> = {
 
 function installName(serverName: string): string {
   const raw = serverName.split("/").at(-1) || "mcp-server";
-  const normalized = raw.replaceAll(/[^a-zA-Z0-9._-]/g, "-");
-  return normalized || "mcp-server";
+  const normalized = raw.replaceAll(/[^a-zA-Z0-9._-]/g, "-").slice(0, 50);
+  const digest = createHash("sha256")
+    .update(serverName)
+    .digest("hex")
+    .slice(0, 16);
+  return `${normalized || "mcp-server"}-${digest}`;
+}
+
+// eslint-disable-next-line no-control-regex -- Reject control bytes in registry-provided configuration.
+const CONTROL = /[\u0000-\u001f\u007f]/;
+const PLACEHOLDER = /<[^>]+>|\$?\{[^}]+\}/;
+const sensitiveName = (name: string) =>
+  /(?:authorization|cookie|token|secret|password|api[-_]?key)/i.test(name);
+const unsafeEnvironment = (name: string) =>
+  /^(?:PATH|HOME|SHELL|COMSPEC|PATHEXT|NODE_OPTIONS|NODE_PATH|PYTHONPATH|PYTHONHOME|NPM_CONFIG_.*|UV_.*|LD_.*|DYLD_.*)$/i.test(
+    name,
+  );
+
+function validPackage(pkg: RegistryPackage): boolean {
+  const id = pkg.identifier ?? "";
+  if (id.length > 214 || CONTROL.test(id)) return false;
+  const validId =
+    pkg.registryType === "npm"
+      ? /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/.test(id)
+      : /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$/.test(id);
+  if (
+    !validId ||
+    (pkg.version !== undefined &&
+      !/^[0-9][A-Za-z0-9.+_-]{0,127}$/.test(pkg.version))
+  )
+    return false;
+  // Runner flags can select another package, evaluate code or alter execution.
+  // Explicit runner arguments require manual review instead of automatic mapping.
+  if ((pkg.runtimeArguments?.length ?? 0) > 0) return false;
+  if (
+    (pkg.environmentVariables ?? []).some(
+      (input) =>
+        !input.name ||
+        !/^[A-Za-z_][A-Za-z0-9_]*$/.test(input.name) ||
+        unsafeEnvironment(input.name) ||
+        [input.value, input.default].some(
+          (value) => typeof value === "string" && CONTROL.test(value),
+        ),
+    )
+  )
+    return false;
+  const names = (pkg.environmentVariables ?? []).map((input) => input.name);
+  if (new Set(names).size !== names.length) return false;
+  if (
+    (pkg.packageArguments ?? []).some(
+      (input) =>
+        (input.type !== undefined &&
+          !["named", "positional"].includes(input.type)) ||
+        (input.type === "named" &&
+          !/^--?[A-Za-z0-9][A-Za-z0-9-]*$/.test(input.name ?? "")),
+    )
+  )
+    return false;
+  return !(pkg.packageArguments ?? []).some((input) =>
+    [input.name, input.value, input.default].some(
+      (value) => typeof value === "string" && CONTROL.test(value),
+    ),
+  );
+}
+
+function safeEndpoint(value: string): string | undefined {
+  if (CONTROL.test(value) || value !== value.trim()) return undefined;
+  const safe = safeWebUrlTemplate(value);
+  if (!safe) return undefined;
+  const url = new URL(safe);
+  if (
+    url.username ||
+    url.password ||
+    url.hash ||
+    [...url.searchParams.keys()].some(sensitiveName)
+  )
+    return undefined;
+  if (
+    url.protocol !== "https:" &&
+    !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)
+  )
+    return undefined;
+  return safe;
 }
 
 function inputLabel(input: RegistryInput, fallback: string): string {
@@ -113,8 +195,16 @@ function resolveInput(
   value?: string;
   requiredInput?: string;
 } {
-  if (typeof input.value === "string") return { value: input.value };
-  if (typeof input.default === "string") return { value: input.default };
+  const provided = input.value ?? input.default;
+  if (
+    input.isSecret ||
+    (typeof provided === "string" &&
+      (PLACEHOLDER.test(provided) || (input.isRequired && !provided.trim())))
+  ) {
+    const label = inputLabel(input, fallback);
+    return { value: placeholder(label), requiredInput: label };
+  }
+  if (typeof provided === "string") return { value: provided };
 
   if (input.isRequired) {
     const label = inputLabel(input, fallback);
@@ -135,7 +225,10 @@ function resolveValues(
     const name = input.name?.trim();
     if (!name) continue;
 
-    const resolved = resolveInput(input, `${fallbackPrefix}_${index + 1}`);
+    const resolved = resolveInput(
+      { ...input, isSecret: input.isSecret || sensitiveName(name) },
+      `${fallbackPrefix}_${index + 1}`,
+    );
     if (resolved.value !== undefined) values[name] = resolved.value;
     if (resolved.requiredInput) requiredInputs.push(resolved.requiredInput);
   }
@@ -145,6 +238,8 @@ function resolveValues(
 
 function argumentNeedsValue(argument: RegistryArgument): boolean {
   return Boolean(
+    argument.isSecret ||
+    PLACEHOLDER.test(argument.value ?? argument.default ?? "") ||
     argument.valueHint ||
     argument.placeholder ||
     argument.format ||
@@ -162,11 +257,12 @@ function resolveArguments(
 
   for (const [index, argument] of (argumentsList ?? []).entries()) {
     const fixedValue =
-      typeof argument.value === "string"
-        ? argument.value
-        : typeof argument.default === "string"
-          ? argument.default
-          : undefined;
+      argument.isSecret ||
+      PLACEHOLDER.test(argument.value ?? argument.default ?? "")
+        ? undefined
+        : typeof argument.value === "string"
+          ? argument.value
+          : argument.default;
 
     if (argument.type === "named") {
       const name = argument.name?.trim();
@@ -177,7 +273,12 @@ function resolveArguments(
         continue;
       }
 
-      if (!argument.isRequired) continue;
+      if (
+        !argument.isRequired &&
+        !argument.isSecret &&
+        !PLACEHOLDER.test(argument.value ?? argument.default ?? "")
+      )
+        continue;
 
       args.push(name);
       if (argumentNeedsValue(argument)) {
@@ -193,7 +294,11 @@ function resolveArguments(
       continue;
     }
 
-    if (argument.isRequired) {
+    if (
+      argument.isRequired ||
+      argument.isSecret ||
+      PLACEHOLDER.test(argument.value ?? argument.default ?? "")
+    ) {
       const label = inputLabel(argument, `${fallbackPrefix}_${index + 1}`);
       args.push(placeholder(label));
       requiredInputs.push(label);
@@ -303,18 +408,50 @@ function fromRemote(
   }
 
   const remote = remotes[0];
-  const template = safeWebUrlTemplate(remote.url);
+  const invalidHeaders = (remote.headers ?? []).some(
+    (input) =>
+      !input.name ||
+      !/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(input.name) ||
+      ["__proto__", "constructor", "prototype"].includes(input.name) ||
+      [input.value, input.default].some(
+        (value) => typeof value === "string" && CONTROL.test(value),
+      ),
+  );
+  const headerNames = (remote.headers ?? []).map((input) =>
+    input.name?.toLowerCase(),
+  );
+  const invalidVariables = Object.values(remote.variables ?? {}).some((input) =>
+    [input.value, input.default].some(
+      (value) => typeof value === "string" && CONTROL.test(value),
+    ),
+  );
+  const template =
+    !invalidHeaders &&
+    !invalidVariables &&
+    new Set(headerNames).size === headerNames.length &&
+    remote.url
+      ? safeEndpoint(remote.url)
+      : undefined;
   if (!template) {
     return {
       status: "unknown",
       installName: name,
-      reason: "The Registry endpoint must be a valid HTTP or HTTPS URL.",
+      reason:
+        "The endpoint must use HTTPS (or loopback HTTP), without embedded credentials, fragments or invalid headers.",
       requirements: [],
       requiredInputs: [],
     };
   }
-  const url = resolveTemplate(template, remote.variables);
-  if (url.requiredInputs.length === 0 && !safeWebUrl(url.value)) {
+  const url = resolveTemplate(
+    template,
+    Object.fromEntries(
+      Object.entries(remote.variables ?? {}).map(([key, input]) => [
+        key,
+        { ...input, isSecret: input.isSecret || sensitiveName(key) },
+      ]),
+    ),
+  );
+  if (url.requiredInputs.length === 0 && !safeEndpoint(url.value)) {
     return {
       status: "unknown",
       installName: name,
@@ -323,6 +460,10 @@ function fromRemote(
       requirements: [],
       requiredInputs: [],
     };
+  }
+  for (const [key, input] of Object.entries(remote.variables ?? {})) {
+    if (input.isSecret || sensitiveName(key))
+      url.requiredInputs.push(inputLabel(input, key));
   }
   const headers = resolveValues(remote.headers, "HEADER");
   const requiredInputs = [...url.requiredInputs, ...headers.requiredInputs];
@@ -337,9 +478,9 @@ function fromRemote(
       installName: name,
       reason: hasUnresolvedUrl
         ? "LM Studio supports this standard-HTTP MCP, but the Registry URL contains required template values that must be resolved before installation."
-        : "LM Studio supports this standard-HTTP MCP. It can be added now, but required header values must be filled in before the server will work.",
+        : "Required credentials or header values must be supplied before installation. This configuration has not been runtime-tested.",
       config,
-      deeplink: hasUnresolvedUrl ? undefined : buildDeeplink(name, config),
+      deeplink: undefined,
       requirements: [],
       requiredInputs: [...new Set(requiredInputs)],
     };
@@ -350,7 +491,7 @@ function fromRemote(
     mode: "remote",
     installName: name,
     reason:
-      "The Registry provides one standard-HTTP endpoint that maps directly to LM Studio's MCP configuration.",
+      "Configuration generated from one published HTTP endpoint. Not runtime-tested with LM Studio; inspect the endpoint and permissions before installation.",
     config,
     deeplink: buildDeeplink(name, config),
     requirements: [],
@@ -367,7 +508,7 @@ function preferredPackage(
       PACKAGE_PRIORITY.includes(
         pkg.registryType as (typeof PACKAGE_PRIORITY)[number],
       ) &&
-      Boolean(pkg.identifier) &&
+      validPackage(pkg) &&
       Boolean(packageCommand(pkg)),
   );
 
@@ -432,9 +573,9 @@ function fromPackage(
       mode: "stdio",
       installName: name,
       reason:
-        "The Registry provides a deterministic stdio package definition. It can be added to LM Studio now, but required values must be filled in before the server will work.",
+        "Required values must be supplied before installation. This generated stdio configuration has not been runtime-tested.",
       config,
-      deeplink: buildDeeplink(name, config),
+      deeplink: undefined,
       requirements,
       requiredInputs: [...new Set(requiredInputs)],
     };
@@ -445,7 +586,7 @@ function fromPackage(
     mode: "stdio",
     installName: name,
     reason:
-      "The Registry provides a deterministic stdio package definition that can be converted to LM Studio's MCP configuration.",
+      "Configuration generated from published package metadata. Not runtime-tested with LM Studio; inspect the package and permissions before installation.",
     config,
     deeplink: buildDeeplink(name, config),
     requirements,

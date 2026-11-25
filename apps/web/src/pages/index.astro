@@ -217,7 +217,7 @@ const browseUrl = withBase('browse.json');
 
     const compatibilityLabel = (status) =>
       status === 'ready'
-        ? 'LM Studio Ready'
+        ? 'Configuration ready'
         : status === 'setup-required'
           ? 'Setup required'
           : 'Compatibility unknown';
@@ -241,7 +241,7 @@ const browseUrl = withBase('browse.json');
       card.querySelector('[data-role="source"]').textContent = sourceLabel(tool.source.kind);
 
       const compatibilityBadge = card.querySelector('[data-role="compatibility"]');
-      compatibilityBadge.textContent = tool.compatibility === 'ready' ? 'Ready' : compatibilityLabel(tool.compatibility);
+      compatibilityBadge.textContent = tool.compatibility === 'ready' ? (tool.type === 'mcp' ? 'Config ready' : 'Ready') : compatibilityLabel(tool.compatibility);
       if (tool.compatibility === 'ready') compatibilityBadge.classList.add('good');
       if (tool.compatibility === 'setup-required') compatibilityBadge.classList.add('setup');
 
