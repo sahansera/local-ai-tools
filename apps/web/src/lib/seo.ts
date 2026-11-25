@@ -12,7 +12,7 @@ export function xmlEscape(value: string): string {
 export function canonicalUrl(site: string, base: string, route = ""): string {
   const prefix = base.replace(/^\/+|\/+$/g, "");
   return new URL(
-    `/${[prefix, route.replace(/^\//, "")].filter(Boolean).join("/")}`,
+    `/${prefix ? `${prefix}/` : ""}${route.replace(/^\/+/, "")}`,
     site,
   ).href;
 }

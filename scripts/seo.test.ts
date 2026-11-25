@@ -21,6 +21,12 @@ test("canonical URLs preserve the project base without duplication", () => {
     "https://example.com/",
   );
 });
+test("project homepage sitemap URL retains its canonical trailing slash", () => {
+  assert.equal(
+    canonicalUrl("https://example.com", "/local-ai-tools/"),
+    "https://example.com/local-ai-tools/",
+  );
+});
 test("sitemap XML escapes URLs and chunks below the protocol limit", () => {
   assert.match(urlset(["https://example.com/?a=1&b=2"]), /a=1&amp;b=2/);
   assert.ok(SITEMAP_CHUNK_SIZE < 50_000);
