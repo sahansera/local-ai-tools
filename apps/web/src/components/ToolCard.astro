@@ -73,7 +73,7 @@ const displayTags = visibleCategories.length > 0 ? visibleCategories : tool.type
   <div class="card-heading">
     <span class="tool-monogram" aria-hidden="true">{tool.name.slice(0, 2).toUpperCase()}</span>
     <div class="card-kind"><span>{tool.type === 'lmstudio-plugin' ? 'LM Studio Plugin' : 'MCP Server'}</span><small>{sourceLabel}</small></div>
-    <span class:list={['badge', 'compatibility-badge', compatibility === 'ready' && 'good', compatibility === 'setup-required' && 'setup']} title={compatibilityReason}>{compatibility === 'ready' ? 'Ready' : compatibilityLabel}</span>
+    <span class:list={['badge', 'compatibility-badge', compatibility === 'ready' && 'good', compatibility === 'setup-required' && 'setup']} title={compatibilityReason}>{compatibility === 'ready' ? (tool.type === 'mcp' ? 'Config ready' : 'Ready') : compatibilityLabel}</span>
   </div>
   <div class="card-topline" hidden={tool.runtime.local === 'unknown' && tool.runtime.apiKeyRequired !== false && !(tool.risks?.length)}>
     {tool.runtime.local === true && <span class="badge good">Runs locally</span>}

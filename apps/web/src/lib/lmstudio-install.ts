@@ -14,7 +14,7 @@ export function lmStudioInstallUrl(tool: Tool): string | undefined {
     return `lmstudio://plugin?owner=${encodeURIComponent(owner)}&name=${encodeURIComponent(name)}`;
   }
 
-  return tool.lmStudio?.deeplink;
+  return tool.lmStudio?.status === "ready" ? tool.lmStudio.deeplink : undefined;
 }
 
 export function lmStudioStatusLabel(tool: Tool): string {
@@ -22,7 +22,7 @@ export function lmStudioStatusLabel(tool: Tool): string {
 
   switch (tool.lmStudio?.status) {
     case "ready":
-      return "LM Studio Ready";
+      return "Configuration ready";
     case "setup-required":
       return "Setup required";
     default:
