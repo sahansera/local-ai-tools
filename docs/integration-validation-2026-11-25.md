@@ -16,6 +16,7 @@ A separate, local-only integration branch combined all implementation commits. R
 - Full build and route checks passed for **73,603 unique listings** and **73,578 legacy redirects**. XML validation checked all **73,620 canonical sitemap URLs** across **8 chunks** against generated files, without duplicate URLs. Canonical metadata, JSON-LD, feedback links, export counts and conservative offline claims were also checked.
 - Final logical output: **923,565,570 bytes**, below the enforced **1,000,000,000-byte** Pages budget, leaving **76,434,430 bytes** headroom. Do not treat that headroom as unlimited growth capacity.
 - Final full build: **137.56 seconds**, about **7.36 GB peak RSS**, on macOS arm64 / Node 26.8.1. Machine load varied; this is not a controlled speed or memory comparison and is not an Ubuntu production refresh benchmark.
+- Final browse payload: **51,255,298 bytes** / **9,839,984 bytes default gzip**. Desktop Node JSON parse was **168 ms**, index construction **739 ms**, approximate heap delta **126 MB**, and sample query p95 below **1.2 ms**. Raw final results are in `final-search-benchmark-2026-11-25.json`; these exclude network, browser rendering and mobile CPU.
 - Compact normalized catalogue export: **97,695,969 bytes**, versus **140,521,740 bytes** pretty-printed, with equivalent parsed data. Search benchmark method and earlier raw results are in `search-and-browser-tests.md` and `search-benchmark-2026-11-25.json`.
 
 ## Limits and rollout
